@@ -34,6 +34,7 @@ jobs:
       - run: python scripts/check_agent_protocol.py --output /tmp/neft-protocol
       - run: python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
       - run: python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
+      - run: python scripts/run_competition_demo.py --output /tmp/neft-competition-demo
       - run: python scripts/check_action_capture_protocol.py --output /tmp/neft-capture-protocol
       - run: >-
           python scripts/check_action_capture_artifact.py
