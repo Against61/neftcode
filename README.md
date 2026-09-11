@@ -122,6 +122,16 @@ python scripts/serve_action_capture.py --store output/action-capture
 coverage. Точные повторы идемпотентны; конфликтующие повторы отвергаются.
 Подробнее: [ACTION_CAPTURE.md](ACTION_CAPTURE.md).
 
+Существующую train-часть зарегистрированной пары LIMS CQ:CR можно загрузить
+пакетно без чтения holdout2025:
+
+```bash
+python scripts/import_lims_to_action_capture.py \
+  --lims /path/to/ЛИМСы.xlsx \
+  --store output/action-capture \
+  --output output/action-capture-lims-seed
+```
+
 ## MCP-инструменты для агента
 
 ```bash
@@ -173,7 +183,7 @@ python scripts/check_action_capture_artifact.py \
 python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 123 unit-теста, настоящий MCP stdio-клиент и live HTTP smoke
+Набор включает 125 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
 изолированного runtime. Синтетические fixtures создаются самими тестами;
 производственные CSV/XLSX для CI не нужны.
 

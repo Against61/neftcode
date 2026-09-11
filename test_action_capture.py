@@ -8,6 +8,7 @@ import unittest
 
 from neft.action_capture import (ActionCaptureStore, COMMAND_COLUMNS,
                                  QUALITY_COLUMNS)
+from neft.action_capture_lims import quality_events
 from scripts.serve_action_capture import make_server
 
 
@@ -15,6 +16,7 @@ ROOT = Path(__file__).resolve().parent
 CAPTURE = json.loads((ROOT / "configs/action_capture_v1.json").read_text())
 ACTION = json.loads((ROOT / "configs/action_outcome_v1.json").read_text())
 COLLECTION = json.loads((ROOT / "configs/action_collection_v1.json").read_text())
+SEED = json.loads((ROOT / "configs/action_capture_lims_seed_v1.json").read_text())
 
 
 def issue(event_id="e-issue", command_id="cmd-1", at="2024-01-15T10:00:00"):
@@ -138,6 +140,35 @@ class ActionCaptureTests(unittest.TestCase):
         (self.root / "events.jsonl").write_text(text.replace("8.0", "9.0"))
         with self.assertRaisesRegex(ValueError, "CORRUPT_JOURNAL_HASH_CHAIN"):
             self.store.status()
+
+    def test_batch_conflict_is_atomic_and_replay_is_idempotent(self):
+        first = sample(event_id="batch-1", sample_id="batch-sample-1",
+                       at="2024-02-01T10:00:00")
+        conflict = sample(event_id="batch-2", sample_id="batch-sample-2",
+                          at="2024-02-01T10:00:00")
+        with self.assertRaisesRegex(ValueError, "SAMPLE_TIME_ALREADY_RECORDED"):
+            self.store.record_many([("quality_sample", first),
+                                    ("quality_sample", conflict)])
+        self.assertEqual(self.store.status()["events"], 0)
+        second = sample(event_id="batch-2", sample_id="batch-sample-2",
+                        at="2024-02-01T11:00:00")
+        added = self.store.record_many([("quality_sample", first),
+                                        ("quality_sample", second)])
+        replay = self.store.record_many([("quality_sample", first),
+                                         ("quality_sample", second)])
+        self.assertEqual((added["new_events"], replay["new_events"]), (2, 0))
+        self.assertEqual(replay["idempotent_events"], 2)
+
+    def test_lims_mapping_has_deterministic_source_ids_and_unknown_availability(self):
+        rows = [{"event_time": "2024-01-01T10:00:00", "value_numeric": 7.5,
+                 "unit_canonical": "mg/kg", "sheet": "Лист1", "row": 55,
+                 "value_column": "CR"}]
+        events = quality_events(rows, {"sha256": "a" * 64}, SEED)
+        event_type, value = events[0]
+        self.assertEqual(event_type, "quality_sample")
+        self.assertIn("aaaaaaaaaaaaaaaa:Лист1:55:CR", value["event_id"])
+        self.assertEqual(value["source_record_id"], "a" * 64 + ":Лист1:55:CR")
+        self.assertNotIn("available_time", value)
 
     def test_loopback_http_accepts_json_and_exposes_status(self):
         server = make_server(("127.0.0.1", 0), self.store, CAPTURE)

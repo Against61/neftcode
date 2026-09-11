@@ -117,3 +117,30 @@ python scripts/check_action_capture_artifact.py \
   --run output/action-capture-protocol \
   --output output/action-capture-protocol-qa
 ```
+
+## Импорт существующей train-части LIMS
+
+Зарегистрированную пару CQ:CR исходного XLSX можно пакетно загрузить в store:
+
+```bash
+python scripts/import_lims_to_action_capture.py \
+  --lims /path/to/ЛИМСы.xlsx \
+  --store output/action-capture \
+  --output output/action-capture-lims-seed
+```
+
+Импортёр читает только sample time 2023–2024 и останавливается на первом
+timestamp 2025 до чтения его числового значения. `available_time` остаётся
+пустым. SHA файла, sheet, row и value column входят в детерминированные ids;
+повторный запуск не создаёт новых событий. Исходный XLSX не изменяется.
+
+Проверить frozen import artifact можно отдельно:
+
+```bash
+python scripts/check_action_capture_lims_seed.py \
+  --run output/action-capture-lims-seed \
+  --output output/action-capture-lims-seed-qa
+```
+
+Если есть ранее построенная `quality.sqlite`, параметр `--reference-sqlite`
+добавляет точное сравнение timestamp, value и source row.

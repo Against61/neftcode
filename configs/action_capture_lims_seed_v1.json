@@ -1,0 +1,20 @@
+{
+  "id": "action-capture-lims-seed-v1",
+  "source_type": "registered_raw_lims_xlsx",
+  "source_series": "lims:ht:2:Mg.Sulfur:CQ:CR",
+  "source_system": "LIMS_XLSX",
+  "train": {"start": "2023-01-01", "end_exclusive": "2025-01-01"},
+  "event_id_prefix": "lims-train-v1",
+  "available_time": null,
+  "policy": {
+    "source_sha256_required": true,
+    "source_row_required": true,
+    "only_valid_unique_samples": true,
+    "sample_time_is_reference_time": true,
+    "availability_is_not_inferred": true,
+    "holdout_numeric_read": false,
+    "sealed_2026_numeric_read": false,
+    "source_mutation": false,
+    "model_fits": 0
+  }
+}

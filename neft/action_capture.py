@@ -360,34 +360,63 @@ class ActionCaptureStore:
         os.replace(temporary, self.status_path)
         return status
 
-    def record(self, event_type, value):
-        event_id, payload = self._canonicalize(event_type, value)
+    def record_many(self, items):
+        """Validate a batch fully, append new events once, then materialize once."""
+        items = list(items)
+        normalized = [(event_type, *self._canonicalize(event_type, value))
+                      for event_type, value in items]
         with self._locked():
             events = self._read_events()
             event_ids, issued, terminal, quality = self._state(events)
-            if event_id in event_ids:
-                prior = event_ids[event_id]
-                if prior["type"] == event_type and prior["payload"] == payload:
-                    status = self._materialize(events)
-                    return {"accepted": True, "idempotent": True,
-                            "event_id": event_id, "capture": status}
-                raise ValueError("EVENT_ID_CONFLICT")
-            self._cross_validate(event_type, payload, issued, terminal, quality)
+            planned = []
+            idempotent = []
+            for event_type, event_id, payload in normalized:
+                if event_id in event_ids:
+                    prior = event_ids[event_id]
+                    if prior["type"] == event_type and prior["payload"] == payload:
+                        idempotent.append(event_id)
+                        continue
+                    raise ValueError("EVENT_ID_CONFLICT")
+                self._cross_validate(event_type, payload, issued, terminal, quality)
+                stub = {"event_id": event_id, "type": event_type, "payload": payload}
+                event_ids[event_id] = stub
+                if event_type == "command_issued":
+                    issued[payload["command_id"]] = payload
+                elif event_type == "command_terminal":
+                    terminal[payload["command_id"]] = payload
+                else:
+                    quality[payload["sample_id"]] = payload
+                planned.append(stub)
             previous = events[-1]["record_sha256"] if events else None
-            core = {"schema": "action-capture-event-v1", "event_id": event_id,
-                    "type": event_type,
-                    "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
-                    "previous_sha256": previous, "payload": payload}
-            record = {**core, "record_sha256": _digest_bytes(_json_bytes(core))}
-            with self.journal.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True,
-                                        allow_nan=False) + "\n")
-                handle.flush()
-                os.fsync(handle.fileno())
-            events.append(record)
+            records = []
+            recorded_at = datetime.now(timezone.utc).isoformat()
+            for stub in planned:
+                core = {"schema": "action-capture-event-v1",
+                        "event_id": stub["event_id"], "type": stub["type"],
+                        "recorded_at_utc": recorded_at,
+                        "previous_sha256": previous, "payload": stub["payload"]}
+                record = {**core, "record_sha256": _digest_bytes(_json_bytes(core))}
+                records.append(record)
+                previous = record["record_sha256"]
+            if records:
+                with self.journal.open("a", encoding="utf-8") as handle:
+                    for record in records:
+                        handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True,
+                                                allow_nan=False) + "\n")
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                events.extend(records)
             status = self._materialize(events)
-            return {"accepted": True, "idempotent": False,
-                    "event_id": event_id, "capture": status}
+            return {"accepted": True, "batch_size": len(normalized),
+                    "new_events": len(records), "idempotent_events": len(idempotent),
+                    "new_event_ids": [row["event_id"] for row in records],
+                    "idempotent_event_ids": idempotent, "capture": status}
+
+    def record(self, event_type, value):
+        result = self.record_many([(event_type, value)])
+        event_id = (result["new_event_ids"] or result["idempotent_event_ids"])[0]
+        return {"accepted": True, "idempotent": result["new_events"] == 0,
+                "event_id": event_id, "capture": result["capture"]}
 
     def status(self):
         with self._locked():
