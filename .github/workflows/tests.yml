@@ -20,5 +20,8 @@ jobs:
           test_decision_cycle
           test_expert_contracts
           test_scenario_sensitivity
+          test_history_adapter
+          test_operator_console
       - run: python scripts/check_agent_protocol.py --output /tmp/neft-protocol
       - run: python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
+      - run: python scripts/check_history_protocol.py --output /tmp/neft-history-protocol

@@ -1,0 +1,32 @@
+{
+  "id": "history-adapter-v1",
+  "allowed_start": "2023-01-01T00:00:00",
+  "allowed_end_exclusive": "2025-01-01T00:00:00",
+  "lookback_hours": 24,
+  "telemetry_inspection_offset_minutes": 10,
+  "telemetry_offset_basis": "Historical inspection assumption, not confirmed reporting delay",
+  "telemetry_cadence_minutes": 10,
+  "telemetry_freshness_minutes_at_cutoff": 20,
+  "telemetry_min_finite_fraction": 0.95,
+  "constant_review_hours": 6,
+  "lims_max_sample_age_hours": 24,
+  "lims_reported_upper_hours": 4,
+  "expert_source_sha256": "64b10e81978a540bec84039927f73aa98f2d95d99bc7bc349f5f4d5f68842110",
+  "telemetry_channels": ["F1", "F2", "P3", "W4", "T5", "P8", "F9", "W10", "T11", "T12", "F14", "F15", "T16", "F17", "T18", "F19", "Q20", "Q21", "F22", "T23", "P24", "F26"],
+  "controls_context": {
+    "P8": {"field": "ht_inlet_temperature", "description": "Температура входа Р-202", "evidence": "QA7; КИП!C9:D9"},
+    "T11": {"field": "ht_feed_flow", "description": "Массовый расход сырья ГТ", "evidence": "QA7; КИП!C12:D12"},
+    "F19": {"field": "ht_inlet_pressure", "description": "Давление на входе ГТ", "evidence": "QA7; КИП!C20:D20"}
+  },
+  "lims_sheet": "Лист1",
+  "lims_series": [
+    {"id": "lims:ht:1:Mass.Sulfur:CC", "date_column": "CC", "value_column": "CD", "indicator": "Mass.Sulfur", "header_unit": "% масс.", "source_unit": "mass_percent", "unit": "mg/kg", "factor": 10000, "field": "ht_feed_sulfur", "cycle_field": null, "point": "1"},
+    {"id": "lims:ht:1:95%.T:BU", "date_column": "BU", "value_column": "BV", "indicator": "95%.T", "header_unit": "°С", "source_unit": "degC", "unit": "degC", "factor": 1, "field": "ht_feed_t95", "cycle_field": "feed_t95", "point": "1"},
+    {"id": "lims:ht:2:Mg.Sulfur:CQ", "date_column": "CQ", "value_column": "CR", "indicator": "Mg.Sulfur", "header_unit": "мг/кг", "source_unit": "mg/kg", "unit": "mg/kg", "factor": 1, "field": "ht_product_sulfur", "cycle_field": "product_sulfur", "point": "2"},
+    {"id": "lims:ht:2:95%.T:CO", "date_column": "CO", "value_column": "CP", "indicator": "95%.T", "header_unit": "°С", "source_unit": "degC", "unit": "degC", "factor": 1, "field": "ht_product_t95", "cycle_field": null, "point": "2"},
+    {"id": "lims:ht:2:CetaneNumber:CY", "date_column": "CY", "value_column": "CZ", "indicator": "CetaneNumber", "header_unit": "ед.цет.ч.", "source_unit": "cetane_number", "unit": "cetane_number", "factor": 1, "field": "ht_product_cn", "cycle_field": null, "point": "2"}
+  ],
+  "scenario_fields": ["horizon", "step", "demand", "sulfur_limit", "t95_limit", "cn_min", "clean_stock", "heavy_stock", "clean_capacity", "heavy_capacity", "clean_s", "clean_t95", "clean_cn", "heavy_s", "heavy_t95", "heavy_cn"],
+  "mapping_limits": ["CRUDE_FLOW_NOT_MAPPED", "CRUDE_SULFUR_NOT_MAPPED", "HT_FEED_CETANE_NOT_MEASURED", "CURRENT_HT_UNITS_AND_AVAILABILITY_UNCONFIRMED", "TANKS_REQUIRE_EXPLICIT_SCENARIO_INPUT", "HISTORICAL_ACTION_MODEL_NOT_ESTABLISHED"],
+  "pac_policy": "Excluded without reading values: measurement timestamp basis, availability and health remain unknown"
+}

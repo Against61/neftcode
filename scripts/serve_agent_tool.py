@@ -39,19 +39,31 @@ class StrictStdin:
             return '{invalid-json}\n'
 
 
-async def serve(audit_root):
+async def serve(audit_root, data_root=None, history_sources=None):
     service=ToolService(audit_root)
+    history_service=scenario_service=None
+    if history_sources is not None:
+        from neft.history_tool import HistoryToolService,HISTORY,description
+        from neft.operator_tool import HistoryScenarioToolService,SCENARIO,description as scenario_description
+        history_service=HistoryToolService(audit_root,data_root,history_sources)
+        scenario_service=HistoryScenarioToolService(audit_root,data_root,history_sources)
     server=Server('neft-refinery',version=POLICY['id'],instructions=POLICY['agent_contract'])
     lock=anyio.Lock()
     @server.list_tools()
     async def list_tools():
+        items=descriptions()+([description(),scenario_description()] if history_service else [])
         return [Tool(**item,annotations=ToolAnnotations(readOnlyHint=False,destructiveHint=False,
-                                                       idempotentHint=False,openWorldHint=False)) for item in descriptions()]
+                                                       idempotentHint=False,openWorldHint=False)) for item in items]
     @server.call_tool(validate_input=False)
     async def call_tool(name,arguments):
         # Adapter owns validation so rejected calls get the same audit trail.
         async with lock:
-            result=await anyio.to_thread.run_sync(service.call,name,arguments)
+            if history_service and name==HISTORY:
+                result=await anyio.to_thread.run_sync(history_service.call,arguments)
+            elif scenario_service and name==SCENARIO:
+                result=await anyio.to_thread.run_sync(scenario_service.call,arguments)
+            else:
+                result=await anyio.to_thread.run_sync(service.call,name,arguments)
         return CallToolResult(content=[TextContent(type='text',text=json.dumps(result['output'],ensure_ascii=False,allow_nan=False))],
                               structuredContent=result['output'],isError=result['is_error'])
     async with stdio_server(stdin=StrictStdin(service.audit_root)) as (read,write):
@@ -60,7 +72,11 @@ async def serve(audit_root):
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--audit-root',type=Path,default=ROOT/'agent-calls')
-    args=ap.parse_args();anyio.run(serve,args.audit_root)
+    ap.add_argument('--data-root',type=Path)
+    ap.add_argument('--history-sources',type=Path)
+    args=ap.parse_args()
+    if bool(args.data_root)!=bool(args.history_sources):ap.error('--data-root and --history-sources are required together')
+    anyio.run(serve,args.audit_root,args.data_root,args.history_sources)
 
 
 if __name__=='__main__':main()

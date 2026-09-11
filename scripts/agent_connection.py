@@ -18,11 +18,15 @@ def toml(value):
     return '{'+','.join(k+'='+toml(v) for k,v in value.items())+'}'
 
 
-def configuration(audit_root):
-    return {'command':sys.executable,'args':['-B',str(ROOT/'scripts/serve_agent_tool.py'),
+def configuration(audit_root,data_root=None,history_sources=None):
+    config={'command':sys.executable,'args':['-B',str(ROOT/'scripts/serve_agent_tool.py'),
             '--audit-root',str(Path(audit_root).resolve())],
             'enabled_tools':['get_refinery_contract','recommend_refinery_plan'],
             'startup_timeout_sec':20,'tool_timeout_sec':30,'required':True}
+    if history_sources:
+        config['args']+=['--data-root',str(Path(data_root).resolve()),'--history-sources',str(Path(history_sources).resolve())]
+        config['enabled_tools']+=['get_refinery_history','evaluate_refinery_scenario_with_history']
+    return config
 
 
 def main():
@@ -30,8 +34,12 @@ def main():
     ap.add_argument('--format',choices=['json','codex'],default='codex')
     ap.add_argument('--audit-root',type=Path,default=ROOT/'agent-calls')
     ap.add_argument('--launch',action='store_true')
+    ap.add_argument('--data-root',type=Path)
+    ap.add_argument('--history-sources',type=Path)
     ap.add_argument('--codex-command',default=str(ROOT/'.runtime/codex-agent-cli/node_modules/.bin/codex') if (ROOT/'.runtime/codex-agent-cli/node_modules/.bin/codex').exists() else 'codex')
-    args=ap.parse_args();config=configuration(args.audit_root)
+    args=ap.parse_args()
+    if bool(args.data_root)!=bool(args.history_sources):ap.error('--data-root and --history-sources are required together')
+    config=configuration(args.audit_root,args.data_root,args.history_sources)
     if args.launch:
         return subprocess.call([args.codex_command,'--sandbox','read-only','-C',str(ROOT),
                                '-c','mcp_servers='+toml({'neft':config})])

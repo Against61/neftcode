@@ -10,10 +10,17 @@ __pycache__/
 .coverage
 htmlcov/
 agent-calls/
+operator-calls/
 output/
 reports/
 runs/
 raw/
+data/
+*.local.json
+*.sqlite
+*.sqlite3
+*.db
+*.jsonl
 *.csv
 *.xlsx
 *.xls

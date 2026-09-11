@@ -1,0 +1,62 @@
+{
+  "id": "operator-console-v1",
+  "scope": "historical_context_plus_explicit_model_scenario",
+  "max_request_bytes": 262144,
+  "timeout_seconds": 20,
+  "history_binding": {
+    "field": "feed_t95",
+    "source_field": "ht_feed_t95",
+    "required_basis": "explicit_lims_sample_plus_4h_upper_bound"
+  },
+  "model_fields": [
+    "crude_sulfur", "crude_flow", "feed_t95", "feed_cn",
+    "sulfur_limit", "t95_limit", "cn_min", "demand",
+    "horizon", "delay", "step",
+    "clean_s", "clean_t95", "clean_cn", "clean_capacity", "clean_stock",
+    "heavy_s", "heavy_t95", "heavy_cn", "heavy_capacity", "heavy_stock",
+    "data_ok"
+  ],
+  "field_groups": [
+    {"title": "Сырьё и время", "fields": ["crude_sulfur", "crude_flow", "feed_t95", "feed_cn", "horizon", "delay", "step"]},
+    {"title": "Задание", "fields": ["sulfur_limit", "t95_limit", "cn_min", "demand"]},
+    {"title": "Чистый резервуар", "fields": ["clean_s", "clean_t95", "clean_cn", "clean_capacity", "clean_stock"]},
+    {"title": "Тяжёлый резервуар", "fields": ["heavy_s", "heavy_t95", "heavy_cn", "heavy_capacity", "heavy_stock"]}
+  ],
+  "labels": {
+    "crude_sulfur": ["Сера нефти", "% масс."],
+    "crude_flow": ["Расход нефти", "т/ч"],
+    "feed_t95": ["T95 входа ГТ", "°C"],
+    "feed_cn": ["Цетановое число входа", "ед."],
+    "sulfur_limit": ["Предел серы продукта", "мг/кг"],
+    "t95_limit": ["Предел T95 продукта", "°C"],
+    "cn_min": ["Минимум цетана", "ед."],
+    "demand": ["Заказ продукта", "т/ч"],
+    "horizon": ["Горизонт", "ч"],
+    "delay": ["Модельная задержка", "ч"],
+    "step": ["Шаг", "мин"],
+    "clean_s": ["Сера", "мг/кг"],
+    "clean_t95": ["T95", "°C"],
+    "clean_cn": ["Цетан", "ед."],
+    "clean_capacity": ["Мощность отбора", "т/ч"],
+    "clean_stock": ["Запас", "т"],
+    "heavy_s": ["Сера", "мг/кг"],
+    "heavy_t95": ["T95", "°C"],
+    "heavy_cn": ["Цетан", "ед."],
+    "heavy_capacity": ["Мощность отбора", "т/ч"],
+    "heavy_stock": ["Запас", "т"]
+  },
+  "demo_origins": [
+    "2024-01-01T09:00:00",
+    "2024-01-01T21:00:00",
+    "2024-01-04T09:00:00",
+    "2024-01-19T22:45:00",
+    "2024-03-24T12:00:00"
+  ],
+  "claims": {
+    "historical_recommendation": false,
+    "industrial_command": false,
+    "model_effect_validated_on_history": false,
+    "telemetry_used_as_online_feature": false,
+    "pac_used": false
+  }
+}
