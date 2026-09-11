@@ -71,6 +71,20 @@ python scripts/run_action_outcome.py \
 Точный CSV-контракт, критерии и ПАК gate:
 [ACTION_OUTCOME.md](ACTION_OUTCOME.md).
 
+Сначала можно проверить новую папку данных без чтения строк неизвестных
+CSV/XLSX:
+
+```bash
+python scripts/check_action_data_readiness.py \
+  --data-root /path/to/archive \
+  --lims "/path/to/ЛИМСы.xlsx" \
+  --output output/action-data-intake
+```
+
+Doctor ищет точный заголовок журнала команд, отдельно профилирует только
+train-часть LIMS и формирует `data_request.md` с недостающими полями и
+минимальным покрытием. Подробнее: [DATA_REQUEST_ACTIONS.md](DATA_REQUEST_ACTIONS.md).
+
 ## MCP-инструменты для агента
 
 ```bash
@@ -107,7 +121,8 @@ python -m unittest -v \
   test_history_adapter \
   test_operator_console \
   test_runtime_v5 \
-  test_action_outcome
+  test_action_outcome \
+  test_action_data_intake
 
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
@@ -115,7 +130,7 @@ python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
 python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 96 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
+Набор включает 102 unit-теста, настоящий MCP stdio-клиент и live HTTP smoke
 изолированного runtime. Синтетические fixtures создаются самими тестами;
 производственные CSV/XLSX для CI не нужны.
 

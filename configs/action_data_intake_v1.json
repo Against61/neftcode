@@ -1,0 +1,37 @@
+{
+  "id": "action-data-intake-v1",
+  "scan_extensions": [".csv", ".xlsx", ".xlsm"],
+  "maximum_files": 200,
+  "xlsx_header_rows": 20,
+  "required_command_columns": [
+    "command_id",
+    "control",
+    "issued_time",
+    "executed_time",
+    "value_before",
+    "value_after",
+    "unit",
+    "status",
+    "source_system"
+  ],
+  "controls": ["P8", "T11", "F19"],
+  "train": {"start": "2023-01-01", "end_exclusive": "2025-01-01"},
+  "holdout": {"start": "2025-01-01", "end_exclusive": "2026-01-01"},
+  "minimum_request": {
+    "isolated_executed_per_control_train": 20,
+    "each_direction_per_control_train": 5,
+    "paired_samples_per_control_per_lag_bin_train": 10,
+    "train_quarters_per_control": 3,
+    "holdout_events_per_control": 10,
+    "baseline_window_hours": 3,
+    "post_bins_hours": [[0, 1], [1, 2], [2, 3]]
+  },
+  "read_policy": {
+    "command_discovery": "headers_only",
+    "lims_profile": "2023-2024 numeric values and timestamps only",
+    "holdout_numeric": false,
+    "sealed_2026_numeric": false,
+    "telemetry_as_commands": false,
+    "mutate_sources": false
+  }
+}
