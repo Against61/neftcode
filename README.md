@@ -35,20 +35,25 @@ python scripts/run_decision_cycle.py --preset bridge --output output/bridge
 
 ```bash
 python -m pip install -r requirements-agent.txt
-python scripts/configure_local_data.py \
-  --data-root /path/to/archive \
-  --output history_sources.local.json
-
-python scripts/serve_operator_console.py \
-  --data-root /path/to/archive \
-  --history-sources history_sources.local.json
+python scripts/start_operator_console.py --data-root /path/to/archive
 ```
 
 Откройте `http://127.0.0.1:8765`. Консоль слушает только loopback, сохраняет
-аудит каждого вызова и не принимает файловые пути через браузер. Кнопка
+аудит каждого вызова и не принимает файловые пути через браузер. Команда сама
+создаёт hash-pinned локальную конфигурацию, выполняет doctor, затем запускает
+сервер. Каждый HTTP-расчёт работает в отдельном процессе с таймаутом 20 с;
+одновременно допускаются два запроса. Кнопка
 демонстрационных допущений заполняет учебный пример явным действием; эти числа
 не считаются архивными. Подробнее: [OPERATOR_CONSOLE.md](OPERATOR_CONSOLE.md)
 и [HISTORY_ADAPTER.md](HISTORY_ADAPTER.md).
+
+Проверить данные и runtime без запуска сервера:
+
+```bash
+python scripts/start_operator_console.py \
+  --data-root /path/to/archive \
+  --check-only
+```
 
 ## MCP-инструменты для агента
 
@@ -84,15 +89,18 @@ python -m unittest -v \
   test_expert_contracts \
   test_scenario_sensitivity \
   test_history_adapter \
-  test_operator_console
+  test_operator_console \
+  test_runtime_v5
 
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
 python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
+python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 85 unit-тестов и настоящий MCP stdio-клиент. Синтетические
-fixtures создаются самими тестами; производственные CSV/XLSX для CI не нужны.
+Набор включает 89 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
+изолированного runtime. Синтетические fixtures создаются самими тестами;
+производственные CSV/XLSX для CI не нужны.
 
 ## Границы данных
 

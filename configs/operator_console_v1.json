@@ -3,6 +3,8 @@
   "scope": "historical_context_plus_explicit_model_scenario",
   "max_request_bytes": 262144,
   "timeout_seconds": 20,
+  "http_read_timeout_seconds": 5,
+  "max_concurrent_requests": 2,
   "history_binding": {
     "field": "feed_t95",
     "source_field": "ht_feed_t95",

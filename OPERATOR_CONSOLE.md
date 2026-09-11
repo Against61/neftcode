@@ -17,18 +17,16 @@
 рядом с репозиторием или в отдельном архивном каталоге. Внешняя модель и сеть
 для UI не требуются.
 
+Одна команда после установки зависимостей создаёт локальную конфигурацию,
+проверяет Python, пути, SHA-256, формат источников, строгий срез без раскрытия
+ЛИМС и изолированный worker, а затем запускает сервер:
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-agent.txt
 
-python scripts/configure_local_data.py \
-  --data-root /path/to/archive \
-  --output history_sources.local.json
-
-python scripts/serve_operator_console.py \
-  --data-root /path/to/archive \
-  --history-sources history_sources.local.json
+python scripts/start_operator_console.py --data-root /path/to/archive
 ```
 
 Откройте `http://127.0.0.1:8765`. Сервер слушает только loopback. Браузер
@@ -52,6 +50,18 @@ python scripts/configure_local_data.py \
 конфигурацию он не перезаписывает. Сами CSV/XLSX и `*.local.json` исключены
 из публичного репозитория.
 
+Отдельная предварительная проверка без запуска сервера:
+
+```bash
+python scripts/neft_doctor.py \
+  --data-root /path/to/archive \
+  --history-sources history_sources.local.json
+```
+
+Doctor возвращает ненулевой код при несовпадении SHA, неверной схеме,
+нечитаемом временном окне, раскрытии ЛИМС в строгом режиме или отказе worker.
+В отчёт входят только метаданные и количества, без исторических значений.
+
 ## Работа в интерфейсе
 
 1. Выберите `as_of` и загрузите срез. Без правила4ч значения ЛИМС с неизвестной
@@ -65,9 +75,14 @@ python scripts/configure_local_data.py \
    независимый gate. Для каждого входа UI покажет происхождение.
 
 Каждый вызов сохраняется в `operator-calls/<call-id>/`: аргументы, срез,
-request/decision/scenario и манифест с SHA. Новый вызов не переиспользует
-предыдущий план. HTTP-вход ограничен 256 КиБ; неизвестные/дублированные поля,
-NaN/Infinity, защищённые периоды и подмена путей отвергаются.
+request/decision/scenario, stdout/stderr worker и манифест с SHA. Новый вызов
+не переиспользует предыдущий план. HTTP-поток только принимает JSON и ожидает
+изолированный дочерний процесс. Таймаут — 20 с, одновременно допускаются два
+расчёта; следующий получает `RUNTIME_BUSY`. Чтение HTTP-запроса ограничено 5 с,
+размер HTTP-входа — 256 КиБ;
+неизвестные/дублированные поля, NaN/Infinity, защищённые периоды и подмена
+путей отвергаются. `/healthz` сообщает режим, таймаут, предел параллельности
+и SHA конфигурации источников.
 
 ## Агент и JSON
 
@@ -96,14 +111,19 @@ python scripts/agent_connection.py \
 ```bash
 python -m unittest -v \
   test_agent_tool test_decision_cycle test_expert_contracts \
-  test_scenario_sensitivity test_history_adapter test_operator_console
+  test_scenario_sensitivity test_history_adapter test_operator_console \
+  test_runtime_v5
 python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
+python scripts/check_runtime_smoke.py
 ```
 
-Последняя frozen-сборка: 85 unit-тестов, 10 MCP-случаев, 9 модельных сценариев
+Frozen v4: 85 unit-тестов, 10 MCP-случаев, 9 модельных сценариев
 на пяти прежних срезах и точное совпадение 9/9 с прямым API. Живой UI прошёл
 desktop/mobile, путь с T95 ЛИМС и отказ без правила4ч; внешних запросов и
-JS-ошибок нет. Это проверка интеграции, а не исторической точности модели.
+JS-ошибок нет. Runtime v5 добавляет 4 unit-теста и CI live smoke: автоматическая
+конфигурация, doctor, случайный loopback-порт, UI/health/history/evaluate,
+отказ неверного JSON-контракта и три полных аудита на сгенерированных CSV/XLSX.
+Это проверка интеграции, а не исторической точности модели.
 
 ## Что всё ещё вводится вручную
 

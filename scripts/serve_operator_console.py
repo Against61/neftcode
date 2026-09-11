@@ -8,7 +8,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from neft.operator_console import OperatorConsoleService, POLICY, contract
+from neft.operator_console import POLICY, contract
+from neft.operator_runtime import IsolatedOperatorConsoleRuntime
 from neft.operator_ui import render_console
 from neft.agent_tool import strict_loads
 
@@ -47,7 +48,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/api/contract':
             return self._send(200, contract())
         if self.path == '/healthz':
-            return self._send(200, {'status': 'ok', 'schema': POLICY['id']})
+            return self._send(200, self.server.service.health())
         self._send(404, {'status': 'TOOL_ERROR', 'reasons': ['NOT_FOUND']})
 
     def do_POST(self):
@@ -56,12 +57,13 @@ class Handler(BaseHTTPRequestHandler):
         if self.headers.get_content_type() != 'application/json':
             return self._send(415, {'status': 'TOOL_ERROR', 'reasons': ['JSON_REQUIRED']})
         try:
+            self.connection.settimeout(POLICY['http_read_timeout_seconds'])
             length = int(self.headers.get('Content-Length', '-1'))
             if length < 0 or length > POLICY['max_request_bytes']:
                 raise ValueError('REQUEST_SIZE')
             raw = self.rfile.read(length)
             body = strict_loads(raw.decode('utf-8'))
-        except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+        except (ValueError, UnicodeDecodeError, json.JSONDecodeError, TimeoutError, OSError):
             return self._send(400, {'status': 'TOOL_ERROR', 'reasons': ['INVALID_JSON_OR_SIZE']})
         operation = {'/api/history': 'history', '/api/evaluate': 'evaluate'}.get(self.path)
         if operation is None:
@@ -81,9 +83,10 @@ def main():
     ap.add_argument('--host', choices=['127.0.0.1', 'localhost', '::1'], default='127.0.0.1')
     ap.add_argument('--port', type=int, default=8765)
     args = ap.parse_args()
-    if not 1 <= args.port <= 65535:
-        ap.error('port must be 1..65535')
-    service = OperatorConsoleService(args.audit_root, args.data_root, args.history_sources)
+    if not 0 <= args.port <= 65535:
+        ap.error('port must be 0..65535')
+    service = IsolatedOperatorConsoleRuntime(
+        args.audit_root, args.data_root, args.history_sources)
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.service = service
     print('http://%s:%d' % (args.host, server.server_port), flush=True)
