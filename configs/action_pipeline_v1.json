@@ -1,0 +1,17 @@
+{
+  "id": "action-pipeline-v1",
+  "intake_config": "configs/action_data_intake_v1.json",
+  "action_config": "configs/action_outcome_v1.json",
+  "executable_command_extensions": [".csv"],
+  "selection": "exactly_one_exact_command_schema",
+  "quality_source": "explicit_required_path",
+  "business_block_exit_code": 0,
+  "infrastructure_failure_exit_code": 1,
+  "read_policy": {
+    "discovery": "headers_only",
+    "train": "delegated_to_action_outcome_v1",
+    "holdout": "read_only_after_train_gate",
+    "sealed_2026": "never_read",
+    "source_mutation": false
+  }
+}

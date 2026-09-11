@@ -18,10 +18,14 @@ def request_text(readiness, lims_profile):
     minimum = readiness["minimum_request"]
     cadence = "не проверена"
     if lims_profile:
+        median = lims_profile["median_interval_hours"]
+        median_text = f'{median:.2f} ч' if median is not None else 'не вычисляется'
+        fraction = lims_profile["short_interval_counts"]["3"]["fraction"]
+        fraction_text = f'{100 * fraction:.1f}%' if fraction is not None else '—'
         cadence = (f'{lims_profile["samples"]} проб за 2023–2024; медианный интервал '
-                   f'{lims_profile["median_interval_hours"]:.2f} ч; интервалов ≤3 ч — '
+                   f'{median_text}; интервалов ≤3 ч — '
                    f'{lims_profile["short_interval_counts"]["3"]["count"]} '
-                   f'({100 * lims_profile["short_interval_counts"]["3"]["fraction"]:.1f}%).')
+                   f'({fraction_text}).')
     columns = ", ".join(readiness["required_command_columns"])
     bins = ", ".join(f"{left}–{right} ч" for left, right in minimum["post_bins_hours"])
     return f"""# Запрос данных для проверки эффекта команд P8/T11/F19

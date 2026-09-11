@@ -19,10 +19,12 @@ def render(inventory, readiness, lims_profile):
     cadence = "не проверена"
     cadence_rows = []
     if lims_profile:
-        cadence = (f'{lims_profile["samples"]} проб; медианный интервал '
-                   f'{lims_profile["median_interval_hours"]:.2f} ч')
+        median = lims_profile["median_interval_hours"]
+        cadence = (f'{lims_profile["samples"]} проб; медианный интервал ' +
+                   (f'{median:.2f} ч' if median is not None else 'не вычисляется'))
         cadence_rows = [[f"≤{hours} ч", value["count"],
-                         f'{100 * value["fraction"]:.1f}%']
+                         (f'{100 * value["fraction"]:.1f}%'
+                          if value["fraction"] is not None else "—")]
                         for hours, value in lims_profile["short_interval_counts"].items()]
     missing = "".join(f"<li>{html.escape(item)}</li>" for item in readiness["missing"])
     contract = html.escape(json.dumps({

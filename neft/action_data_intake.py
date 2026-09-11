@@ -159,6 +159,8 @@ def profile_lims(path, action_config, intake_config):
     train = intake_config["train"]
     rows, audit = read_quality_source(
         path, action_config, train["start"], train["end_exclusive"])
+    audit = dict(audit)
+    audit.setdefault("later_numeric_values_parsed", False)
     timestamps = sorted(datetime.fromisoformat(row["event_time"]) for row in rows)
     intervals = [(right - left).total_seconds() / 3600
                  for left, right in zip(timestamps, timestamps[1:])]

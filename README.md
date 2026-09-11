@@ -85,6 +85,18 @@ Doctor ищет точный заголовок журнала команд, о�
 train-часть LIMS и формирует `data_request.md` с недостающими полями и
 минимальным покрытием. Подробнее: [DATA_REQUEST_ACTIONS.md](DATA_REQUEST_ACTIONS.md).
 
+После получения новой выгрузки весь путь выполняется одной командой:
+
+```bash
+python scripts/run_action_pipeline.py \
+  --data-root /path/to/archive \
+  --quality-source "/path/to/ЛИМСы.xlsx"
+```
+
+Конвейер запускает калибровку только при одном exact command CSV. Отсутствие
+источника, несколько кандидатов или XLSX дают проверяемый business refusal;
+holdout остаётся закрытым до прохождения train-gate.
+
 ## MCP-инструменты для агента
 
 ```bash
@@ -122,7 +134,8 @@ python -m unittest -v \
   test_operator_console \
   test_runtime_v5 \
   test_action_outcome \
-  test_action_data_intake
+  test_action_data_intake \
+  test_action_pipeline
 
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
@@ -130,7 +143,7 @@ python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
 python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 102 unit-теста, настоящий MCP stdio-клиент и live HTTP smoke
+Набор включает 107 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
 изолированного runtime. Синтетические fixtures создаются самими тестами;
 производственные CSV/XLSX для CI не нужны.
 
