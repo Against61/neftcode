@@ -1,7 +1,6 @@
 import csv
 import json
 from pathlib import Path
-import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -16,6 +15,7 @@ from neft.action_pipeline import final_result, select_command_source
 ROOT = Path(__file__).resolve().parent
 INTAKE = json.loads((ROOT / "configs/action_data_intake_v1.json").read_text())
 PIPELINE = json.loads((ROOT / "configs/action_pipeline_v1.json").read_text())
+COLLECTION = json.loads((ROOT / "configs/action_collection_v1.json").read_text())
 REQUIRED = INTAKE["required_command_columns"]
 
 
@@ -25,10 +25,8 @@ def write_csv(path, headers=REQUIRED):
 
 
 def empty_quality(path):
-    with sqlite3.connect(path) as database:
-        database.execute("""CREATE TABLE quality_observation (
-            series_id TEXT,event_time TEXT,value_numeric REAL,quality_status TEXT,
-            unit_canonical TEXT,source_file TEXT,sheet TEXT,row INTEGER,value_column TEXT)""")
+    with Path(path).open("w", newline="", encoding="utf-8") as handle:
+        csv.writer(handle).writerow(COLLECTION["quality_schema"])
 
 
 def xlsx_header(path):
@@ -88,7 +86,7 @@ class ActionPipelineTests(unittest.TestCase):
             folder = Path(folder)
             data = folder / "data"; data.mkdir()
             write_csv(data / "commands.csv")
-            quality = folder / "quality.sqlite"; empty_quality(quality)
+            quality = folder / "quality.csv"; empty_quality(quality)
             output = folder / "output"
             process = subprocess.run([
                 sys.executable, str(ROOT / "scripts/run_action_pipeline.py"),

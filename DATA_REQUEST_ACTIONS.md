@@ -32,3 +32,20 @@ python scripts/run_action_pipeline.py \
 Первая версия автоматически исполняет только exact CSV. Найденный XLSX
 останавливается с `COMMAND_FORMAT_NOT_EXECUTABLE`, чтобы преобразование не
 меняло источник и не подменяло типы времени неявно.
+
+Для более частых независимых проб принимается canonical CSV:
+
+```text
+sample_id,sample_time,available_time,value_numeric,unit,quality_status,source_system,source_record_id
+```
+
+`sample_time` — время отбора. `available_time` можно оставить пустым, но его
+нельзя выводить из sample time. Готовые шаблоны и 90 слотов сбора создаёт:
+
+```bash
+python scripts/build_action_collection_kit.py \
+  --source-root /path/to/source-package \
+  --output output/action-collection-kit
+```
+
+Подробности: [ACTION_COLLECTION.md](ACTION_COLLECTION.md).

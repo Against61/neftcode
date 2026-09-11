@@ -41,6 +41,8 @@ def main():
                    if "://" not in href and not href.startswith("#")]
     missing = [href for href in local_links if not (run / href).is_file()]
     blocked = not result["calibration_started"]
+    calibration_decision = (json.loads((run / "calibration/decision.json").read_text())
+                            if not blocked else None)
     checks = {
         "manifest_completed": manifest["status"] == "completed",
         "expected_stage": (args.expected_stage is None or
@@ -53,6 +55,15 @@ def main():
                                                 not (run / "calibration").exists()),
         "blocked_zero_fit": not blocked or result["model_fits"] == 0,
         "blocked_holdout_closed": not blocked or not result["holdout_numeric_read"],
+        "calibration_manifest_matches": blocked or (
+            digest(run / "calibration/manifest.json") ==
+            manifest["calibration_manifest_sha256"]),
+        "calibration_result_matches_pipeline": blocked or (
+            result["decision"] == calibration_decision["decision"] and
+            result["readiness"] == calibration_decision["readiness"] and
+            result["model_fits"] == calibration_decision["model_fits"] and
+            result["holdout_numeric_read"] ==
+            calibration_decision["holdout_numeric_read"]),
         "sealed_2026_closed": not result["sealed_2026_numeric_read"],
     }
     output = args.output.resolve()

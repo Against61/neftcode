@@ -1,0 +1,46 @@
+{
+  "id": "action-collection-v1",
+  "command_schema": [
+    "command_id", "control", "issued_time", "executed_time",
+    "value_before", "value_after", "unit", "status", "source_system"
+  ],
+  "quality_schema": [
+    "sample_id", "sample_time", "available_time", "value_numeric",
+    "unit", "quality_status", "source_system", "source_record_id"
+  ],
+  "quality_statuses": ["valid", "invalid"],
+  "quality_unit": "mg/kg",
+  "train": {"start": "2023-01-01", "end_exclusive": "2025-01-01"},
+  "holdout": {"start": "2025-01-01", "end_exclusive": "2026-01-01"},
+  "controls": ["P8", "T11", "F19"],
+  "minimum": {
+    "isolated_executed_per_control_train": 20,
+    "each_direction_per_control_train": 5,
+    "paired_samples_per_control_per_lag_bin_train": 10,
+    "train_quarters_per_control_per_lag_bin": 3,
+    "holdout_events_per_control": 10,
+    "baseline_window_hours": 3,
+    "post_bins_hours": [[0, 1], [1, 2], [2, 3]],
+    "require_every_train_lag_bin": true
+  },
+  "suggested_observation_offsets_minutes": {
+    "baseline": -30,
+    "post_0_1h": 30,
+    "post_1_2h": 90,
+    "post_2_3h": 150
+  },
+  "collection_policy": {
+    "observe_only_routine_authorized_commands": true,
+    "system_initiates_commands": false,
+    "one_sample_may_support_multiple_commands": false,
+    "command_isolation_hours": 3,
+    "sample_time_is_lims_reference_time": true,
+    "available_time_is_optional_and_never_inferred": true,
+    "unknown_available_time_allows_online_feature": false,
+    "train_numeric_read": true,
+    "holdout_numeric_read_before_train_gate": false,
+    "sealed_2026_numeric_read": false,
+    "source_mutation": false,
+    "model_fits": 0
+  }
+}

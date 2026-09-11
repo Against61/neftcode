@@ -17,6 +17,10 @@ COMMAND_COLUMNS = {
     'command_id', 'control', 'issued_time', 'executed_time',
     'value_before', 'value_after', 'unit', 'status', 'source_system',
 }
+QUALITY_COLLECTION_COLUMNS = {
+    'sample_id', 'sample_time', 'available_time', 'value_numeric',
+    'unit', 'quality_status', 'source_system', 'source_record_id',
+}
 SHEET_NS = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 OFFICE_REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 
@@ -306,13 +310,93 @@ def read_quality_xlsx(path, config, start, end_exclusive):
     }
 
 
+def read_quality_collection_csv(path, config, start, end_exclusive):
+    """Read canonical independent samples and stop before holdout numeric fields."""
+    source = Path(path).resolve()
+    start = local_time(start, 'split_start')
+    end = local_time(end_exclusive, 'split_end')
+    records = []
+    seen_ids = set()
+    seen_source_records = set()
+    seen_times = set()
+    previous = None
+    stop = None
+    status_counts = {}
+    with source.open(encoding='utf-8-sig', newline='') as handle:
+        reader = csv.DictReader(handle)
+        headers = reader.fieldnames or []
+        if set(headers) != QUALITY_COLLECTION_COLUMNS or len(headers) != len(set(headers)):
+            raise ValueError('QUALITY_COLLECTION_COLUMNS_SCHEMA')
+        for source_row, raw in enumerate(reader, 2):
+            sample_time = local_time(raw['sample_time'], 'sample_time')
+            if previous is not None and sample_time < previous:
+                raise ValueError('QUALITY_COLLECTION_UNORDERED')
+            previous = sample_time
+            if sample_time >= end:
+                stop = sample_time.isoformat()
+                break
+            if sample_time < start:
+                continue
+            sample_id = raw['sample_id'].strip()
+            source_record_id = raw['source_record_id'].strip()
+            source_system = raw['source_system'].strip()
+            if not sample_id or sample_id in seen_ids:
+                raise ValueError('SAMPLE_ID_MISSING_OR_DUPLICATE')
+            if not source_record_id or source_record_id in seen_source_records:
+                raise ValueError('SOURCE_RECORD_ID_MISSING_OR_DUPLICATE')
+            if not source_system:
+                raise ValueError('QUALITY_SOURCE_SYSTEM_MISSING')
+            if sample_time in seen_times:
+                raise ValueError('DUPLICATE_SAMPLE_TIME')
+            seen_ids.add(sample_id)
+            seen_source_records.add(source_record_id)
+            seen_times.add(sample_time)
+            status = raw['quality_status'].strip().lower()
+            if status not in {'valid', 'invalid'}:
+                raise ValueError('QUALITY_STATUS')
+            if raw['unit'].strip() != config['target_unit']:
+                raise ValueError('QUALITY_UNIT_MISMATCH')
+            available_raw = raw['available_time'].strip()
+            available = local_time(available_raw, 'available_time') if available_raw else None
+            if available is not None and available < sample_time:
+                raise ValueError('AVAILABLE_TIME_BEFORE_SAMPLE')
+            status_counts[status] = status_counts.get(status, 0) + 1
+            value = None
+            if status == 'valid':
+                value = _number(raw['value_numeric'])
+                if value is None:
+                    raise ValueError('QUALITY_VALUE_NONNUMERIC_OR_NONFINITE')
+            elif raw['value_numeric'].strip():
+                raise ValueError('INVALID_QUALITY_HAS_NUMERIC_VALUE')
+            if value is not None:
+                records.append({
+                    'sample_id': sample_id, 'event_time': sample_time.isoformat(),
+                    'available_time': available.isoformat() if available is not None else None,
+                    'value_numeric': value, 'quality_status': status,
+                    'unit_canonical': config['target_unit'],
+                    'source_system': source_system, 'source_record_id': source_record_id,
+                    'source_file': str(source), 'source_row': source_row,
+                    'online_feature_allowed': False,
+                })
+    return records, {
+        'source': str(source), 'sha256': sha(source),
+        'rows_in_split': sum(status_counts.values()), 'valid_unique': len(records),
+        'status_counts': status_counts, 'stopping_timestamp_only': stop,
+        'later_numeric_values_parsed': False,
+        'unknown_available_time': sum(row['available_time'] is None for row in records),
+        'online_feature_rows': 0,
+    }
+
+
 def read_quality_source(path, config, start, end_exclusive):
     suffix = Path(path).suffix.lower()
     if suffix in {'.xlsx', '.xlsm'}:
         return read_quality_xlsx(path, config, start, end_exclusive)
     if suffix in {'.sqlite', '.sqlite3', '.db'}:
         return read_quality_sqlite(path, config['target_series'], start, end_exclusive)
-    raise ValueError('QUALITY_SOURCE_MUST_BE_XLSX_OR_SQLITE')
+    if suffix == '.csv':
+        return read_quality_collection_csv(path, config, start, end_exclusive)
+    raise ValueError('QUALITY_SOURCE_MUST_BE_XLSX_SQLITE_OR_CANONICAL_CSV')
 
 
 def link_outcomes(commands, quality, config):

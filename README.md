@@ -97,6 +97,20 @@ python scripts/run_action_pipeline.py \
 источника, несколько кандидатов или XLSX дают проверяемый business refusal;
 holdout остаётся закрытым до прохождения train-gate.
 
+Для подготовки недостающих данных можно сразу собрать проверяемый комплект:
+
+```bash
+python scripts/build_action_collection_kit.py \
+  --source-root /path/to/source-package \
+  --output output/action-collection-kit
+```
+
+Он создаёт точные шаблоны команд и независимых проб, план на 90 действий
+(60 train и 30 исторических holdout) и отчёт с дефицитами по каждому
+P8/T11/F19, направлению и окну 0–1/1–2/2–3 ч. Заполненные canonical CSV
+напрямую принимает основной action pipeline. Подробнее:
+[ACTION_COLLECTION.md](ACTION_COLLECTION.md).
+
 ## MCP-инструменты для агента
 
 ```bash
@@ -135,7 +149,8 @@ python -m unittest -v \
   test_runtime_v5 \
   test_action_outcome \
   test_action_data_intake \
-  test_action_pipeline
+  test_action_pipeline \
+  test_action_collection
 
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
@@ -143,7 +158,7 @@ python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
 python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 107 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
+Набор включает 113 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
 изолированного runtime. Синтетические fixtures создаются самими тестами;
 производственные CSV/XLSX для CI не нужны.
 
