@@ -1,0 +1,103 @@
+{
+  "experiment_id": "EXP-0019",
+  "id": "action-outcome-calibration-v1",
+  "controls": {
+    "P8": {
+      "meaning": "reactor_inlet_temperature",
+      "unit": "degC"
+    },
+    "T11": {
+      "meaning": "feed_mass_flow",
+      "unit": "t/h"
+    },
+    "F19": {
+      "meaning": "inlet_pressure",
+      "unit": "MPa"
+    }
+  },
+  "target_series": "lims:ht:2:Mg.Sulfur:CQ",
+  "target_unit": "mg/kg",
+  "quality_excel": {
+    "sheet": "Лист1",
+    "group_header_column": "CE",
+    "group_header_contains": [
+      "Гидроочистка",
+      "Точка отбора '2'"
+    ],
+    "date_column": "CQ",
+    "value_column": "CR",
+    "indicator": "Mg.Sulfur",
+    "header_unit": "мг/кг"
+  },
+  "train": {
+    "start": "2023-01-01",
+    "end_exclusive": "2025-01-01"
+  },
+  "holdout": {
+    "start": "2025-01-01",
+    "end_exclusive": "2026-01-01"
+  },
+  "sealed_release": {
+    "start": "2026-01-01"
+  },
+  "response_bins_hours": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      3
+    ]
+  ],
+  "baseline_before_hours": 3,
+  "isolation_hours": 3,
+  "minimum": {
+    "executed_commands_per_control": 20,
+    "each_direction_per_control": 5,
+    "paired_events_per_control_bin": 10,
+    "train_quarters_per_control_bin": 3,
+    "holdout_events_per_control": 10
+  },
+  "selection": {
+    "metric": "leave_one_quarter_out_mae",
+    "tie_break": "later_lag",
+    "seed": 20260911,
+    "bootstrap_repetitions": 500,
+    "bootstrap_unit": "quarter",
+    "prediction_interval_coverage": 0.9
+  },
+  "holdout_acceptance": {
+    "mae_improvement_fraction_vs_train_median": 0.1,
+    "minimum_interval_coverage": 0.8,
+    "maximum_interval_coverage": 1.0,
+    "require_all_controls": true
+  },
+  "time_contract": {
+    "command_issued_time": "source-recorded operator/control-system issue event",
+    "command_executed_time": "source-recorded execution acknowledgement; pairing origin",
+    "telemetry_transition": "diagnostic observation only; never substituted for a command",
+    "lims_timestamp": "sample/reference time used as outcome event time",
+    "lims_availability": "not used as online feature in retrospective outcome alignment",
+    "timezone": "common source-local naive clock; UTC offset unknown",
+    "pac": "excluded until timestamp basis, availability/delay, health and calibration sources pass the gate"
+  },
+  "budget": {
+    "wallclock_seconds": 180,
+    "threads": 2,
+    "model_fits_max": 1600
+  },
+  "forbidden": [
+    "infer issued_time or executed_time from P8/T11/F19 transitions",
+    "read 2025 numeric holdout before all train readiness gates pass",
+    "read 2026 numeric observations",
+    "select lag on holdout",
+    "mutate production model coefficients automatically",
+    "use PAC without the metadata gate",
+    "treat LIMS sample time as result availability"
+  ]
+}

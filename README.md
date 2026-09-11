@@ -55,6 +55,22 @@ python scripts/start_operator_console.py \
   --check-only
 ```
 
+## Калибровка по журналу команд
+
+Отдельный read-only контур связывает подтверждённые времена исполнения
+P8/T11/F19 с независимыми пробами серы ЛИМС в окнах0–1/1–2/2–3ч.
+Лаг и коэффициенты выбираются на2023–2024; числа2025 читаются только
+после прохождения train-gate. Телеметрические переходы не считаются командами.
+
+```bash
+python scripts/run_action_outcome.py \
+  --command-log /path/to/commands.csv \
+  --quality-source "/path/to/ЛИМСы 01.01.2023 - н.в_ (2).xlsx"
+```
+
+Точный CSV-контракт, критерии и ПАК gate:
+[ACTION_OUTCOME.md](ACTION_OUTCOME.md).
+
 ## MCP-инструменты для агента
 
 ```bash
@@ -90,7 +106,8 @@ python -m unittest -v \
   test_scenario_sensitivity \
   test_history_adapter \
   test_operator_console \
-  test_runtime_v5
+  test_runtime_v5 \
+  test_action_outcome
 
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
@@ -98,7 +115,7 @@ python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
 python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 89 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
+Набор включает 96 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
 изолированного runtime. Синтетические fixtures создаются самими тестами;
 производственные CSV/XLSX для CI не нужны.
 

@@ -1,0 +1,19 @@
+{
+  "schema": "pac-availability-v1",
+  "timestamp_basis": "measurement_time",
+  "availability": {
+    "mode": "per_record_available_time",
+    "field": "available_time",
+    "evidence": "REPLACE_WITH_INTERFACE_OR_ARCHIVE_SPECIFICATION"
+  },
+  "health": {
+    "source": "REPLACE_WITH_ANALYZER_STATUS_SOURCE",
+    "status_field": "health_status",
+    "accepted_values": ["ok"]
+  },
+  "calibration": {
+    "source": "REPLACE_WITH_CALIBRATION_LOG_SOURCE",
+    "status_field": "calibration_status",
+    "accepted_values": ["valid"]
+  }
+}
