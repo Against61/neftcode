@@ -111,6 +111,17 @@ P8/T11/F19, направлению и окну 0–1/1–2/2–3 ч. Запол�
 напрямую принимает основной action pipeline. Подробнее:
 [ACTION_COLLECTION.md](ACTION_COLLECTION.md).
 
+Для постоянной регистрации есть локальный observe-only API:
+
+```bash
+python scripts/serve_action_capture.py --store output/action-capture
+```
+
+Он принимает JSON-события выдачи и исполнения команд, отдельно пробы LIMS,
+ведёт append-only журнал и после каждой записи обновляет canonical CSV и
+coverage. Точные повторы идемпотентны; конфликтующие повторы отвергаются.
+Подробнее: [ACTION_CAPTURE.md](ACTION_CAPTURE.md).
+
 ## MCP-инструменты для агента
 
 ```bash
@@ -150,15 +161,19 @@ python -m unittest -v \
   test_action_outcome \
   test_action_data_intake \
   test_action_pipeline \
-  test_action_collection
+  test_action_collection \
+  test_action_capture
 
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
 python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
+python scripts/check_action_capture_protocol.py --output /tmp/neft-capture-protocol
+python scripts/check_action_capture_artifact.py \
+  --run /tmp/neft-capture-protocol --output /tmp/neft-capture-protocol-qa
 python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 113 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
+Набор включает 123 unit-теста, настоящий MCP stdio-клиент и live HTTP smoke
 изолированного runtime. Синтетические fixtures создаются самими тестами;
 производственные CSV/XLSX для CI не нужны.
 

@@ -30,8 +30,14 @@ jobs:
           test_action_data_intake
           test_action_pipeline
           test_action_collection
+          test_action_capture
       - run: python scripts/check_agent_protocol.py --output /tmp/neft-protocol
       - run: python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
       - run: python scripts/check_history_protocol.py --output /tmp/neft-history-protocol
+      - run: python scripts/check_action_capture_protocol.py --output /tmp/neft-capture-protocol
+      - run: >-
+          python scripts/check_action_capture_artifact.py
+          --run /tmp/neft-capture-protocol
+          --output /tmp/neft-capture-protocol-qa
       - name: Generated-fixture doctor and live HTTP smoke
         run: python scripts/check_runtime_smoke.py

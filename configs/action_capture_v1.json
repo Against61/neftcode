@@ -1,0 +1,32 @@
+{
+  "id": "action-capture-v1",
+  "controls": {
+    "P8": {"unit": "degC"},
+    "T11": {"unit": "t/h"},
+    "F19": {"unit": "MPa"}
+  },
+  "quality_unit": "mg/kg",
+  "terminal_statuses": ["executed", "cancelled", "failed"],
+  "max_request_bytes": 16384,
+  "http_read_timeout_seconds": 5,
+  "max_text_length": 256,
+  "time_contract": {
+    "timezone": "common source-local naive clock; UTC offset unknown",
+    "issued_time": "source-recorded issue event",
+    "executed_time": "source-recorded execution acknowledgement",
+    "sample_time": "LIMS sample/reference time",
+    "available_time": "optional source-recorded result availability; never inferred"
+  },
+  "policy": {
+    "observe_only": true,
+    "system_initiates_commands": false,
+    "append_only_event_journal": true,
+    "same_event_id_same_payload_is_idempotent": true,
+    "same_event_id_different_payload_is_rejected": true,
+    "canonical_csv_is_materialized_only_from_valid_events": true,
+    "pending_commands_are_not_emitted_to_canonical_csv": true,
+    "capture_2026_plus_as_sealed_future_data": true,
+    "read_2026_plus_for_calibration": false,
+    "model_fits": 0
+  }
+}
