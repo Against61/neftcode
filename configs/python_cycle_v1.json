@@ -1,0 +1,24 @@
+{
+  "id": "python-cycle-v1",
+  "scope": "synthetic_model_or_readonly_replay",
+  "sulfur_hard_max_mg_kg": 10,
+  "lims_upper_bound_source_sha256": "64b10e81978a540bec84039927f73aa98f2d95d99bc7bc349f5f4d5f68842110",
+  "freshness_hours": {"lims": 24, "pac": 1, "virtual": 1},
+  "freshness_basis": "Explicit demonstration policy, not a confirmed plant operating rule.",
+  "no_change_relative_cost_tolerance": 0.000001,
+  "no_change_basis": "Keep the configured current complete recipe when it is robustly feasible for the original order and its cost upper bound is within this relative tolerance of the optimum. This is not an empirically calibrated intervention cost.",
+  "data_rules": "LIMS event_time is sample time. Optional conservative eligibility event+4h requires expert source SHA; not an observed publication. PAC needs confirmed measurement time, explicit availability and healthy status. Unknown or future values are excluded. Source priority LIMS > PAC > virtual applies only within the same declared field and unit. Source conflicts are reported. Required unavailable bindings cause refusal; no silent manual fallback.",
+  "replay_rules": "Replay values may be inspected and selected with availability evidence but never directly drive the synthetic action model. Historical input returns ABSTAIN_HISTORICAL_SCOPE. A later justified mapping is separate work.",
+  "evaluation_budget_seconds": 180,
+  "model_fits": 0,
+  "production_rows_read": 0,
+  "acceptance": [
+    "Match feasibility, cost, quality and inventory of all seven frozen v3 presets on both uncertainty scopes and every deferred start; allow optimal ties but report command differences.",
+    "Reject the saved sulfur_limit30 counterexample and attempts to override the cap via request JSON.",
+    "Independently recompute all emitted plans over all 972 or 486 worlds; reject tampered plans, stocks, doses, limits, time grid and nonfinite values.",
+    "Exercise sample/publication boundaries, late receipt, future values, PAC unknown/failed health, source priority, missing required bindings and read-only replay.",
+    "Expose typed role exchange with state/candidate identifiers; serialize finite strict JSON and a readable operator card.",
+    "Run normal NO_CHANGE, quality-risk, missing-data and invalid-specification through the public Python entry point."
+  ],
+  "limits": "Model semantics unchanged apart from enforced mandatory cap, source contract and final NO_CHANGE policy. No industrial command, causal claim, model fitting, new historical data or holdout access. This stage provides API/CLI and a static decision card; unified live UI is a subsequent stage."
+}

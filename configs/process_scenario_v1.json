@@ -1,0 +1,34 @@
+{
+  "id": "process-scenario-v1",
+  "scope": "synthetic_process_scenario_only",
+  "source_sha256": "64b10e81978a540bec84039927f73aa98f2d95d99bc7bc349f5f4d5f68842110",
+  "budget": {"model_fits": 0, "production_rows_read": 0, "build_seconds": 180},
+  "expert_basis": {"controls": ["ht:P8", "ht:T11", "ht:F19"], "horizon_hours": [0, 3], "step_minutes": [15, 60], "additive_fraction_max": 0.03, "additive_cost_ratio": 100, "lims_publication_upper_hours": 4},
+  "assumptions": {
+    "units": "Model values: P8 degC, T11 t/h, F19 MPa; no conversion of production CSV asserted",
+    "avt": "Fixed illustrative diesel mass yield 0.2 and sulfur partition 0.5; not fitted to plant",
+    "ht": "Sout=Sin*exp(-(5.8+0.06*(T-340)+0.35*(P-4))*100/Q); monotone illustrative kinetics, not measured effect",
+    "response": "Effective controls=current+alpha*(command-current); alpha=clamp((horizon-delay)/0.5,0,1). All controls have the same illustrative response. Feed properties are already effective for the evaluated batch. No AVT transport lag estimated",
+    "quality": "HT T95=feedT95-0.1*(T-340)-0.5*(P-4); CN=feedCN+0.08*(T-340)+0.4*(P-4)",
+    "mixing": "Mass fractions on final product: fresh HT + clean tank + heavy tank + additive = 1. S mass balance; T95 and CN linear surrogates, not validated mixing laws. Additive assigned zero S and no change to base T95; CN uplift=400*final mass fraction",
+    "cost": "Diesel base cost=1 per tonne; HT cost=1+0.0002*(T-330)^2+0.04*(P-3)^2+0.08*(100/Q-1); clean=1.6, heavy=0.85, additive=100. Only cost of streams used in target batch; unused HT output goes to unmodeled storage",
+    "equipment": "severity=0.6*(T-330)/40+0.4*(P-3)/2; limit 0.85. This is a model burden index, not failure probability",
+    "limits": "All numeric control bounds, tank properties/capacities, quality margins and baseline are invented for this model; expert named roles only",
+    "freshness": "Scenario inputs are manual synthetic values; no real LIMS/PAC ingestion. Separate contract checks demonstrate LIMS upper-bound eligibility",
+    "optimizer": "Finite grid plus current candidate; minimum cost per tonne, ties closest to current then deterministic order; global optimum not claimed"
+  },
+  "model": {"yield": 0.2, "sulfur_partition": 0.5, "response_ramp_hours": 0.5, "ht_yield": 0.98, "severity_limit": 0.85, "sulfur_margin": 0.5, "t95_margin": 1, "cetane_margin": 0.5, "additive_cn_gain": 400, "clean_cost": 1.6, "heavy_cost": 0.85, "change_cost_tolerance": 0.000001},
+  "grid": {"temperature": [330, 340, 350, 360, 370], "pressure": [3, 4, 5], "feed": [80, 100, 120], "clean": [0, 0.1, 0.2, 0.3], "heavy": [0, 0.1, 0.2], "additive": [0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03]},
+  "bounds": {"crude_sulfur": [0.05, 3], "crude_flow": [300, 1000], "feed_t95": [300, 400], "feed_cn": [30, 65], "sulfur_limit": [0.1, 30], "t95_limit": [280, 400], "cn_min": [30, 75], "demand": [10, 160], "horizon": [0, 3], "delay": [0, 3], "step": [15, 60], "clean_s": [0, 100], "clean_t95": [250, 400], "clean_cn": [30, 75], "clean_capacity": [0, 100], "heavy_s": [0, 200], "heavy_t95": [280, 450], "heavy_cn": [20, 70], "heavy_capacity": [0, 100]},
+  "defaults": {"crude_sulfur": 0.8, "crude_flow": 500, "feed_t95": 350, "feed_cn": 47, "sulfur_limit": 10, "t95_limit": 355, "cn_min": 51, "demand": 90, "horizon": 2, "delay": 1, "step": 30, "clean_s": 2, "clean_t95": 320, "clean_cn": 60, "clean_capacity": 30, "heavy_s": 30, "heavy_t95": 375, "heavy_cn": 43, "heavy_capacity": 20, "data_ok": true},
+  "current": {"temperature": 340, "pressure": 4, "feed": 100, "clean": 0, "heavy": 0, "additive": 0},
+  "presets": [
+    {"id": "base", "title": "Базовое сырьё", "overrides": {}, "expected": "feasible"},
+    {"id": "sulfur-rise", "title": "Больше серы в сырье", "overrides": {"crude_sulfur": 1.6}, "expected": "feasible"},
+    {"id": "cetane-demand", "title": "Выше задание по цетану", "overrides": {"cn_min": 58}, "expected": "feasible"},
+    {"id": "no-tank", "title": "Чистый резервуар недоступен", "overrides": {"clean_capacity": 0}, "expected": "feasible"},
+    {"id": "impossible", "title": "Недостижимая спецификация", "overrides": {"sulfur_limit": 0.1, "t95_limit": 280, "cn_min": 75}, "expected": "abstain"},
+    {"id": "before-response", "title": "Раньше отклика ГТ", "overrides": {"horizon": 0, "clean_capacity": 0, "heavy_capacity": 0}, "expected": "abstain"},
+    {"id": "missing-data", "title": "Неполный вход", "overrides": {"data_ok": false}, "expected": "abstain"}
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "dynamic-blending-v1",
+  "scope": "synthetic_dynamic_process_only",
+  "budget_seconds": 180,
+  "defaults": {"horizon": 3, "step": 30, "clean_stock": 54, "heavy_stock": 27},
+  "stock_bounds": {"clean_stock": [0, 200], "heavy_stock": [0, 200]},
+  "protocol": {
+    "hypothesis": "A time-varying blend under one fixed HT command can restore robust feasibility or reduce conservative cost at least1% versus the best constant blend under identical temporal and stock constraints. Full and conditional delay<=1h results are distinct.",
+    "ht": "One command at t=0, held through the window; no adaptive knowledge of the uncertainty world or future measurements.",
+    "time": "Equal periods from0 to input horizon<=3h; step15/30/60min must divide horizon. Each period is delivered at a constant mixture and flow throughout its interval. Check both endpoints, including t=0, not only the final horizon.",
+    "inventory": "clean/heavy stocks in tonnes, no replenishment; fixed properties. Consumption=flow*fraction*duration. Additive supply unbounded within3% dose; unused HT output goes to unmodeled storage, as before.",
+    "grid": "45 HT commands x77 blends, duplicate current point removed; clean/heavy shares0.1 and additive0.005 steps unchanged. DP states are exact cumulative clean/heavy consumption units of demand*period_hours*0.1, stocks rounded down to reachable grid states only.",
+    "robustness": "Same972 fixed worlds, conditional486 separately. Quality/capacity at both interval endpoints. Monotone sulfur removal ratio and linear quality/effective flow imply endpoint extrema; cost convex in response fraction implies endpoint maximum.",
+    "corner_reduction": "Worst sulfur k=0.9, worst T95 bias=+5, worst CN gain=0.75; enumerate all delays and endpoints. Cost maxima over energy0.75/1.25 and clean price1.2. Validate against all972 worlds independently.",
+    "objective": "Minimize sum over periods of period_mass*maximum_endpoint_world_unit_cost. Conservative upper bound, not actual integrated cost nor global-world minimax/regret. Same objective for stationary and dynamic. Earlier5% regret gate remains unchanged in v2 and is not transferred to this different objective.",
+    "tie_break": "Ascending HT-grid order, then ascending accumulated stock units; DP keeps first equal-cost transition within1e-10.",
+    "frontier": "At each possible start period, solve delivery of all remaining periods through the same end time. Deferred early volume is explicitly unmet, never a successful original order. No automatic quality/volume relaxation.",
+    "acceptance": "Every delivered period passes all world constraints, inventory never negative, totals reconcile, dynamic cost<=feasible best stationary cost within tolerance; scientific gain requires >=1% cost reduction or dynamic-only feasibility on at least one preregistered scenario, reported separately by uncertainty scope.",
+    "limits": "Model demonstration, not causal validation. No AVT control optimization, real inventories, replenishment, repeated HT commands or online replanning. No training/production data reads. Full-world feasibility at nodes only."
+  },
+  "presets": [
+    {"id":"base","title":"Исходное задание","overrides":{}},
+    {"id":"bridge","title":"Менее сернистое сырьё · запас 54 т","overrides":{"crude_sulfur":0.4}},
+    {"id":"limited-stock","title":"Менее сернистое сырьё · запас 27 т","overrides":{"crude_sulfur":0.4,"clean_stock":27}},
+    {"id":"no-clean","title":"Чистый резервуар пуст","overrides":{"crude_sulfur":0.4,"clean_stock":0}},
+    {"id":"sulfur-rise","title":"Повышенная сера","overrides":{"crude_sulfur":1.6}},
+    {"id":"cetane","title":"Высокое цетановое задание","overrides":{"crude_sulfur":0.4,"cn_min":58}},
+    {"id":"missing","title":"Неполные данные","overrides":{"data_ok":false}}
+  ]
+}

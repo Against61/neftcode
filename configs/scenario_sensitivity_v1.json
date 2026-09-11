@@ -1,0 +1,31 @@
+{
+  "id": "scenario-sensitivity-v1",
+  "scope": "synthetic_model_assumption_audit",
+  "baseline": "synthetic_reference_configuration",
+  "baseline_manifest_sha256": null,
+  "axes": {
+    "kinetics_multiplier": [0.9, 1.0, 1.1],
+    "t95_mixing_bias_c": [-5.0, 0.0, 5.0],
+    "additive_gain_multiplier": [0.75, 1.0, 1.25],
+    "ht_energy_multiplier": [0.75, 1.0, 1.25],
+    "clean_cost_multiplier": [0.8, 1.0, 1.2],
+    "delay_hours": [0.0, 1.0, 2.0, 3.0]
+  },
+  "nominal": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+  "protocol": {
+    "worlds": 972,
+    "factorial": "complete Cartesian product, no probability weights",
+    "cases": "all seven frozen presets; incomplete input checked without numeric grid",
+    "kinetics": "multiply whole sulfur removal exponent, not the output concentration",
+    "t95_bias": "add bias*4*w*(1-w), w=(clean+heavy)/(1-additive), to nominal mixed T95",
+    "cost": "multiply HT processing premium over base diesel cost 1; vary clean tank price only; additive cost 100 and max3% remain expert constants",
+    "delay": "override assumed command response delay; keep every case horizon and half-hour ramp unchanged",
+    "nominal_acceptance": "same frozen action feasible in all972 worlds and maximum relative cost regret <=0.05; missing/no-action case not scored as a robust recommendation",
+    "regret": "candidate_cost/world_minimum_feasible_cost - 1; undefined if candidate infeasible or no feasible comparator",
+    "robust_choice": "intersection of feasible candidate sets across worlds; minimize maximum regret, then nominal cost, then distance to current and fixed order; empty intersection means ABSTAIN",
+    "secondary": "same tests conditional on delay<=1h, explicitly conditional, not replacement for main result",
+    "attribution": "nominal plus one-factor-at-a-time worlds; per-factor failures and action switches; interactions from full factorial",
+    "limits": "finite model grid sensitivity only; no confidence interval, causal validation, industrial probability or extrapolation"
+  },
+  "budget": {"wallclock_seconds": 180, "threads": 2, "model_fits": 0, "production_rows_read": 0, "seed": null}
+}

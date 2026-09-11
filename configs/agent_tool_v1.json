@@ -1,0 +1,24 @@
+{
+  "id": "refinery-agent-tool-v1",
+  "calculate_tool": "recommend_refinery_plan",
+  "contract_tool": "get_refinery_contract",
+  "timeout_seconds": 20,
+  "max_request_bytes": 262144,
+  "scope": "local_synthetic_model_or_readonly_replay",
+  "model_fits": 0,
+  "production_rows_read": 0,
+  "bounds": "Only the canonical Python request is accepted. The agent cannot set model coefficients, validator policy, code, filesystem destination, timeout, or uncertainty scope used for the primary recommendation.",
+  "observability": "Per-call directory under the server-owned audit root: request, strict decision JSON, HTML card, worker stdout/stderr, invocation metadata and SHA manifest. Summary contains the admitted primary recommendation; conditional and deferred results are diagnostics only.",
+  "agent_contract": "Do not invent observations, publication timestamps, health, provenance, units, or bindings. Missing data must remain unknown. Never promote a conditional/deferred plan or an invalid response to the primary recommendation. Explain model assumptions and use exact tool evidence. No plant actuation or file-edit tools are exposed.",
+  "acceptance": [
+    "End-to-end tool call runs the existing Python cycle in a child process and matches direct API results on the seven original presets.",
+    "Previously unused transfer inputs vary horizon, step, stocks and raw-material quality; wrapper and direct API agree without changing the evaluator.",
+    "Reject unknown tools, extra parameters, nonfinite/duplicate-key JSON, requests above the fixed size and attempts to weaken the sulfur cap or override policy.",
+    "No-result and conditional-only cases retain null primary recommendation.",
+    "Worker timeout or exception produces a tool error and an auditable failed call; no stale recommendation is reused.",
+    "Demonstrate a protocol client discovering the tool and sending JSON to obtain a result, plus saved trace and artifact integrity checks."
+  ],
+  "evaluation_budget_seconds": 180,
+  "language_model_evaluation": "A model provider/client is not selected yet. Protocol and deterministic tool integration can be tested without an external LLM; do not describe this as proof of agent reasoning quality.",
+  "rollback": "Stop or remove the tool server connection; the Python cycle and frozen reports remain callable unchanged."
+}

@@ -1,0 +1,2 @@
+-r requirements-cycle.txt
+mcp==1.30.0
