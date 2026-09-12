@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "experiment_id": "EXP-0020",
+  "experiment_name": "Historical intelligence: sulfur, typical controls and analogs",
+  "mode": "offline_research_only",
+  "source_runs": {
+    "telemetry": "runs/EXP-0002/20260909T150030115403Z/telemetry_ht.npz",
+    "quality": "runs/EXP-0008/20260910T010619412465Z/independent_train_events.jsonl"
+  },
+  "source_sha256": {
+    "runs/EXP-0002/20260909T150030115403Z/telemetry_ht.npz": "5ca08a92dbffce7477361e9c8736d669d307eec66ce152dddbd9d19614a7f1b9",
+    "runs/EXP-0008/20260910T010619412465Z/independent_train_events.jsonl": "b773e0e2673275709ce7729f20d0dfdcef872c0297530e8b21407aaf79406952",
+    "runs/EXP-0008/20260910T010619412465Z/data_contract.json": "83b7cc69e42e8ca4f647b6fc40ad2d4d6ef0220a16c2569882378b11a39df9c6"
+  },
+  "target": "lims:ht:2:Mg.Sulfur:CQ",
+  "target_unit": "mg/kg",
+  "control_targets": ["ht:P8", "ht:T11", "ht:F19"],
+  "control_semantics": "historically observed telemetry values; not issued or executed commands and not optimal actions",
+  "horizons_minutes": [15, 30, 60, 120, 180],
+  "splits": {
+    "fit_start": "2023-01-01T00:00:00",
+    "calibration_start": "2024-07-01T00:00:00",
+    "holdout_start": "2024-10-01T00:00:00",
+    "holdout_end_exclusive": "2025-01-01T00:00:00"
+  },
+  "feature_spec": {
+    "assumed_telemetry_latency_minutes": 10,
+    "max_telemetry_age_minutes": 20,
+    "excluded_channels": ["ht:T6", "ht:W7", "ht:P13", "ht:F25"],
+    "lags_minutes": [0, 30, 60, 180, 360],
+    "windows_minutes": [60, 180, 360]
+  },
+  "quality_baseline": {
+    "name": "last_explicitly_eligible_lims",
+    "availability_rule": "sample_time_plus_4h_conservative_upper_bound",
+    "actual_publication_time": "unknown",
+    "maximum_age_hours": 168
+  },
+  "action_baseline": "NO_CHANGE_last_telemetry_at_cutoff",
+  "candidate_models": {
+    "hist_gradient_boosting": {
+      "loss": "absolute_error",
+      "learning_rate": 0.05,
+      "max_iter": 150,
+      "max_leaf_nodes": 4,
+      "min_samples_leaf": 20,
+      "l2_regularization": 10.0,
+      "early_stopping": false,
+      "random_state": 42
+    },
+    "historical_analogs": {
+      "neighbors": 5,
+      "metric": "robust_scaled_euclidean",
+      "minimum_time_separation_hours": 24
+    }
+  },
+  "selection": "minimum calibration MAE; baseline wins exact ties",
+  "uncertainty": {
+    "method": "absolute calibration residual quantile",
+    "nominal_coverage": 0.9,
+    "scope": "empirical interval; no exchangeability or industrial guarantee"
+  },
+  "metrics": [
+    "mae", "rmse", "median_absolute_error", "p90_absolute_error",
+    "coverage", "relative_mae_improvement", "interval_coverage", "interval_width",
+    "unsafe_low_sulfur_predictions", "control_normalized_mae"
+  ],
+  "acceptance": {
+    "quality_min_relative_mae_improvement_vs_last": 0.05,
+    "quality_prediction_coverage": 1.0,
+    "quality_unsafe_low_predictions_not_worse": true,
+    "control_min_relative_mae_improvement_vs_no_change": 0.05,
+    "control_required_improved_pairs": 9,
+    "no_industrial_promotion": true
+  },
+  "agent_contract": {
+    "quality_forecast_is_diagnostic": true,
+    "predicted_controls_are_typical_not_optimal": true,
+    "analogs_are_context_not_causal_evidence": true,
+    "main_recommendation_requires_existing_independent_gate": true,
+    "pac_included": false
+  },
+  "seed": 42,
+  "budget": {
+    "max_real_data_model_fits": 20,
+    "wallclock_seconds": 300,
+    "thread_limit": 2
+  },
+  "artifact_expectations": [
+    "metrics.json", "selection.json", "bundle.joblib", "feature_schema.json",
+    "holdout_predictions.npz", "analogs.json", "report.html", "manifest.json"
+  ]
+}

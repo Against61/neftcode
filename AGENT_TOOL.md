@@ -15,6 +15,13 @@
 сценарий с provenance всех входов по [контракту консоли](OPERATOR_CONSOLE.md).
 Пути задаются при запуске сервера.
 
+Если оператор также передал hash-pinned bundle, сервер добавляет
+`get_refinery_historical_intelligence`. Он возвращает прогноз серы с
+эмпирическим диапазоном, исторически типичные P8/T11/F19 и пять аналогов.
+Ответ остаётся диагностическим: `recommendation=null`, типичные controls нельзя
+копировать в оптимизатор как команды. Обучение и подключение описаны в
+[HISTORICAL_INTELLIGENCE.md](HISTORICAL_INTELLIGENCE.md).
+
 Агент собирает запрос и объясняет результат. Оптимизацию, предел серы≤10,
 доступность анализов и независимый gate выполняет Python. Агент не может
 передать в инструмент новую модель, путь записи, команду shell или свой
@@ -67,6 +74,8 @@ python scripts/agent_connection.py --launch
    публикация — отдельное поле. Правило sample+4ч использовать только явно.
    Неизвестный ПАК исключается; не создавать вымышленные health/available_time.
 3. Вызвать расчёт. Для нового входа нужен новый вызов, предыдущий план не переносить.
+   Исторический контекст получать отдельным инструментом; использовать прогноз
+   качества для основной рекомендации лишь когда весь диапазон ≤10 мг/кг.
 4. При MODEL_PLAN объяснить основной план, выпуск, ограничения и модельную
    природу эффекта. При NO_CHANGE объяснить сохранение режима.
 5. При отказе назвать причину. Можно запросить недостающие сведения или
@@ -103,7 +112,7 @@ python scripts/agent_connection.py --launch
 ## Проверки
 
 ```bash
-python -m unittest -v test_agent_tool test_decision_cycle test_expert_contracts test_scenario_sensitivity test_history_adapter test_operator_console
+python -m unittest -v test_agent_tool test_decision_cycle test_expert_contracts test_scenario_sensitivity test_history_adapter test_operator_console test_historical_intelligence test_historical_intelligence_tool test_historical_training
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol-new
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol-new
 python scripts/run_agent_demo.py --output /tmp/neft-real-agent-new

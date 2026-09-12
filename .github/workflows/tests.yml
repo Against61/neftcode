@@ -16,7 +16,8 @@ jobs:
           cache-dependency-path: |
             requirements-agent.txt
             requirements-cycle.txt
-      - run: python -m pip install -r requirements-agent.txt
+            requirements-historical.txt
+      - run: python -m pip install -r requirements-historical.txt
       - run: >-
           python -m unittest -v
           test_agent_tool
@@ -31,6 +32,9 @@ jobs:
           test_action_pipeline
           test_action_collection
           test_action_capture
+          test_historical_intelligence
+          test_historical_intelligence_tool
+          test_historical_training
       - run: python scripts/check_agent_protocol.py --output /tmp/neft-protocol
       - run: python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
       - run: python scripts/check_history_protocol.py --output /tmp/neft-history-protocol

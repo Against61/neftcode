@@ -18,7 +18,7 @@ def toml(value):
     return '{'+','.join(k+'='+toml(v) for k,v in value.items())+'}'
 
 
-def configuration(audit_root,data_root=None,history_sources=None):
+def configuration(audit_root,data_root=None,history_sources=None,historical_intelligence_bundle=None,historical_intelligence_sha256=None):
     config={'command':sys.executable,'args':['-B',str(ROOT/'scripts/serve_agent_tool.py'),
             '--audit-root',str(Path(audit_root).resolve())],
             'enabled_tools':['get_refinery_contract','recommend_refinery_plan'],
@@ -26,6 +26,10 @@ def configuration(audit_root,data_root=None,history_sources=None):
     if history_sources:
         config['args']+=['--data-root',str(Path(data_root).resolve()),'--history-sources',str(Path(history_sources).resolve())]
         config['enabled_tools']+=['get_refinery_history','evaluate_refinery_scenario_with_history']
+    if historical_intelligence_bundle:
+        config['args']+=['--historical-intelligence-bundle',str(Path(historical_intelligence_bundle).resolve()),
+                         '--historical-intelligence-sha256',historical_intelligence_sha256]
+        config['enabled_tools']+=['get_refinery_historical_intelligence']
     return config
 
 
@@ -36,10 +40,14 @@ def main():
     ap.add_argument('--launch',action='store_true')
     ap.add_argument('--data-root',type=Path)
     ap.add_argument('--history-sources',type=Path)
+    ap.add_argument('--historical-intelligence-bundle',type=Path)
+    ap.add_argument('--historical-intelligence-sha256')
     ap.add_argument('--codex-command',default=str(ROOT/'.runtime/codex-agent-cli/node_modules/.bin/codex') if (ROOT/'.runtime/codex-agent-cli/node_modules/.bin/codex').exists() else 'codex')
     args=ap.parse_args()
     if bool(args.data_root)!=bool(args.history_sources):ap.error('--data-root and --history-sources are required together')
-    config=configuration(args.audit_root,args.data_root,args.history_sources)
+    if bool(args.historical_intelligence_bundle)!=bool(args.historical_intelligence_sha256):ap.error('--historical-intelligence-bundle and --historical-intelligence-sha256 are required together')
+    if args.historical_intelligence_bundle and not args.history_sources:ap.error('historical intelligence requires history sources')
+    config=configuration(args.audit_root,args.data_root,args.history_sources,args.historical_intelligence_bundle,args.historical_intelligence_sha256)
     if args.launch:
         return subprocess.call([args.codex_command,'--sandbox','read-only','-C',str(ROOT),
                                '-c','mcp_servers='+toml({'neft':config})])

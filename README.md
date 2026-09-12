@@ -157,6 +157,8 @@ python scripts/agent_connection.py --format codex
 python scripts/agent_connection.py \
   --data-root /path/to/archive \
   --history-sources history_sources.local.json \
+  --historical-intelligence-bundle output/historical-intelligence/model/bundle.joblib \
+  --historical-intelligence-sha256 SHA256_ИЗ_MANIFEST \
   --launch
 ```
 
@@ -170,10 +172,16 @@ python scripts/agent_connection.py \
 - `get_refinery_history` — read-only срез и причины отказа;
 - `evaluate_refinery_scenario_with_history` — отдельный модельный сценарий
   с provenance всех входов.
+- `get_refinery_historical_intelligence` — прогноз серы с диапазоном,
+  исторически типичные P8/T11/F19 и пять аналогов; всегда без команды.
 
 Агент не задаёт пути, модель, таймаут, обязательный предел или каталог аудита.
 Расчёт запускается в ограниченном дочернем Python-процессе. Подробнее:
 [AGENT_TOOL.md](AGENT_TOOL.md).
+
+Чтобы обучить исторический компонент прямо из локальных HT CSV и ЛИМС XLSX,
+следуйте [HISTORICAL_INTELLIGENCE.md](HISTORICAL_INTELLIGENCE.md). Состояние
+всех 12 направлений собрано в [DEVELOPMENT_ROADMAP.md](DEVELOPMENT_ROADMAP.md).
 
 ## Проверка
 
@@ -190,7 +198,10 @@ python -m unittest -v \
   test_action_data_intake \
   test_action_pipeline \
   test_action_collection \
-  test_action_capture
+  test_action_capture \
+  test_historical_intelligence \
+  test_historical_intelligence_tool \
+  test_historical_training
 
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
@@ -201,15 +212,17 @@ python scripts/check_action_capture_artifact.py \
 python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 125 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
+Набор включает 140 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
 изолированного runtime. Синтетические fixtures создаются самими тестами;
 производственные CSV/XLSX для CI не нужны.
 
 ## Границы данных
 
-В репозитории нет производственных CSV/XLSX, обученных моделей, внутренних
+В репозитории нет производственных CSV/XLSX, готовых обученных моделей, внутренних
 отчётов, закрытых периодов и журналов реальных агентских сессий. Локальные
 `*.local.json`, данные, результаты и журналы исключены через `.gitignore`.
+Локальная команда обучения создаёт bundle из пользовательских файлов и
+оставляет его в исключённом каталоге `output/`.
 
 ПАК не используется: смысл его timestamp, время доступности и статусы
 исправности/калибровки неизвестны. HT P8/T11/F19 показываются как контекст,
