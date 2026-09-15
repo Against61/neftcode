@@ -17,7 +17,9 @@
 
 Если оператор также передал hash-pinned bundle, сервер добавляет
 `get_refinery_historical_intelligence`. Он возвращает прогноз серы с
-эмпирическим диапазоном, исторически типичные P8/T11/F19 и пять аналогов.
+эмпирическим диапазоном и исторически типичные P8/T11/F19. Готовый
+пакет из `models/` не хранит строки обучения; пять аналогов возвращает локально
+пересобранный full bundle.
 Ответ остаётся диагностическим: `recommendation=null`, типичные controls нельзя
 копировать в оптимизатор как команды. Обучение и подключение описаны в
 [HISTORICAL_INTELLIGENCE.md](HISTORICAL_INTELLIGENCE.md).
@@ -58,6 +60,14 @@ python scripts/agent_connection.py --format codex
 
 ```bash
 python scripts/agent_connection.py --launch
+```
+
+Если есть архив, одна команда автоматически создаст локальный source-config,
+проверит готовую prediction-модель по manifest и добавит три исторических
+инструмента:
+
+```bash
+python scripts/agent_connection.py --data-root /path/to/archive --launch
 ```
 
 При запуске сохраняется текущая модель Codex, включается read-only sandbox.

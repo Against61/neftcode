@@ -17,8 +17,9 @@ INTELLIGENCE = 'get_refinery_historical_intelligence'
 
 def description():
     return {'name':INTELLIGENCE,
-            'description':('Return a diagnostic sulfur forecast with uncertainty, historically typical future P8/T11/F19 telemetry, '
-                           'and five source-timestamped analogs for configured 2023–2024 history. This tool never returns a plant command '
+            'description':('Return a diagnostic sulfur forecast with uncertainty and historically typical future P8/T11/F19 telemetry. '
+                           'A locally trained bundle also returns five source-timestamped analogs; the distributed prediction-only bundle '
+                           'returns an explicit analog-index status instead of embedding training rows. This tool never returns a plant command '
                            'or optimizer recommendation. Typical controls have unconfirmed units and must not be copied into the scenario optimizer. '
                            'Use quality for a main recommendation only when the full returned range satisfies the hard sulfur limit.'),
             'inputSchema':{'type':'object','properties':{

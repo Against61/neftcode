@@ -27,6 +27,7 @@ data/
 *.parquet
 *.pkl
 *.joblib
+!models/historical_intelligence_v1.joblib
 *.onnx
 *.pt
 *.pth

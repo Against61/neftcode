@@ -49,10 +49,16 @@ python scripts/run_competition_demo.py --output output/competition-demo
 ## Демонстрация с историческими данными
 
 Если на машине показа доступны HT CSV и ЛИМС XLSX, установите
-`requirements-historical.txt`, создайте `history_sources.local.json` и запустите
-обучение по [инструкции](HISTORICAL_INTELLIGENCE.md). Полученный bundle добавляет
-агенту прогноз серы 15–180 минут, диапазон неопределённости, пять аналогов и
-исторически типичный режим. Эталонный набор из 13 случаев запускается через
+`requirements-historical.txt` и запустите:
+
+```bash
+python scripts/agent_connection.py --data-root /path/to/archive --launch
+```
+
+Готовый hash-pinned bundle добавит агенту
+прогноз серы 15–180 минут, диапазон неопределённости и исторически типичный
+режим. Пять аналогов добавляются после локальной пересборки full bundle по
+[инструкции](HISTORICAL_INTELLIGENCE.md). Эталонный набор из 13 случаев запускается через
 `scripts/run_agent_benchmark_v2.py`.
 
 Проверенный holdout 2024Q4 показал улучшение MAE серы на 15,8–28,2% против

@@ -240,9 +240,13 @@ def infer_historical_context(bundle: dict, telemetry: pd.DataFrame, as_of, horiz
         raise ValueError("INSUFFICIENT_TELEMETRY_FEATURES")
     x = feature_frame.to_numpy(float)
     name = str(horizon_minutes); q = bundle["quality"][name]
+    analog_keys = {"fit_x", "fit_y", "fit_times", "feature_names"}
+    analog_index_available = analog_keys.issubset(q)
     if q["selected"] == "hgb":
         point = float(q["model"].predict(x)[0])
     elif q["selected"] == "analogs":
+        if not analog_index_available:
+            raise ValueError("SELECTED_ANALOG_MODEL_REQUIRES_LOCAL_ANALOG_INDEX")
         point = float(analog_predictions(q["fit_x"], q["fit_y"], x, q["fit_times"],
             pd.DatetimeIndex([pd.Timestamp(as_of)]), neighbors=neighbors,
             minimum_time_separation_hours=config["candidate_models"]["historical_analogs"]["minimum_time_separation_hours"])[0][0])
@@ -260,25 +264,30 @@ def infer_historical_context(bundle: dict, telemetry: pd.DataFrame, as_of, horiz
                              "range": [typical - float(item["radius"]), typical + float(item["radius"])],
                              "unit": None, "unit_status": "UNCONFIRMED_NO_CONVERSION",
                              "meaning": "historically_typical_telemetry_not_command_or_optimum"}
-    _, proof, _ = analog_predictions(q["fit_x"], q["fit_y"], x, q["fit_times"],
-        pd.DatetimeIndex([pd.Timestamp(as_of)]), neighbors=neighbors,
-        minimum_time_separation_hours=config["candidate_models"]["historical_analogs"]["minimum_time_separation_hours"])
-    positions = {c: q["feature_names"].index(c + "__lag_0m") for c in config["control_targets"]}
     analogs = []
-    for row in proof[0]:
-        idx = row["train_index"]
-        analogs.append({"event_time": row["event_time"], "distance": row["distance"],
-                        "observed_product_sulfur": row["target"], "sulfur_unit": "mg/kg",
-                        "observed_telemetry_controls": {c: {"value": float(q["fit_x"][idx, pos]),
-                            "unit": None, "unit_status": "UNCONFIRMED_NO_CONVERSION"} for c, pos in positions.items()}})
+    if analog_index_available:
+        _, proof, _ = analog_predictions(q["fit_x"], q["fit_y"], x, q["fit_times"],
+            pd.DatetimeIndex([pd.Timestamp(as_of)]), neighbors=neighbors,
+            minimum_time_separation_hours=config["candidate_models"]["historical_analogs"]["minimum_time_separation_hours"])
+        positions = {c: q["feature_names"].index(c + "__lag_0m") for c in config["control_targets"]}
+        for row in proof[0]:
+            idx = row["train_index"]
+            analogs.append({"event_time": row["event_time"], "distance": row["distance"],
+                            "observed_product_sulfur": row["target"], "sulfur_unit": "mg/kg",
+                            "observed_telemetry_controls": {c: {"value": float(q["fit_x"][idx, pos]),
+                                "unit": None, "unit_status": "UNCONFIRMED_NO_CONVERSION"} for c, pos in positions.items()}})
+    limitations = list(bundle["limitations"])
+    if not analog_index_available and "ANALOG_INDEX_NOT_BUNDLED_REBUILD_FROM_LOCAL_HISTORY" not in limitations:
+        limitations.append("ANALOG_INDEX_NOT_BUNDLED_REBUILD_FROM_LOCAL_HISTORY")
     return {"schema": "neft-historical-context-v1", "as_of": pd.Timestamp(as_of).isoformat(),
             "horizon_minutes": horizon_minutes,
             "quality_forecast": {"selected": q["selected"], "point": point, "range": interval,
                                  "full_range_within_sulfur_limit": interval["upper"] <= sulfur_limit,
                                  "use_for_main_recommendation": interval["upper"] <= sulfur_limit},
             "historically_typical_controls": controls, "analogs": analogs,
+            "analogs_status": "AVAILABLE" if analog_index_available else "NOT_BUNDLED_REBUILD_FROM_LOCAL_HISTORY",
             "recommendation": None, "industrial_command": False, "pac": "EXCLUDED",
-            "limitations": bundle["limitations"] + ["CONTROL_UNITS_AND_OPTIMIZER_MAPPING_UNCONFIRMED"]}
+            "limitations": limitations + ["CONTROL_UNITS_AND_OPTIMIZER_MAPPING_UNCONFIRMED"]}
 
 
 def action_origins(config: dict) -> pd.DatetimeIndex:

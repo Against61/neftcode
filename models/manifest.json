@@ -1,0 +1,69 @@
+{
+  "schema": "neft-model-package-v1",
+  "artifact": {
+    "file": "historical_intelligence_v1.joblib",
+    "sha256": "0c656f2cd9754bbc2202e14a5bf87ff4a88cd94f23955e2cf7ee5af86eafc869",
+    "size_bytes": 4395780
+  },
+  "source": {
+    "experiment_id": "EXP-0020",
+    "bundle_sha256": "0bb796f1ce3b62ed136b618698959ea9a10d31cdd6ecaf968d09fb591c29afd8",
+    "holdout_boundary": "2024-10-01T00:00:00",
+    "selection_basis": "calibration_only",
+    "fit_count": 20
+  },
+  "runtime": {
+    "python": "3.12",
+    "scikit_learn": "1.7.2",
+    "joblib": "1.5.2"
+  },
+  "scope": {
+    "scope": "prediction_models_only",
+    "analog_index_included": false,
+    "training_rows_included": false,
+    "training_timestamps_included": false
+  },
+  "selection": {
+    "quality": {
+      "15": "hgb",
+      "30": "hgb",
+      "60": "hgb",
+      "120": "hgb",
+      "180": "hgb"
+    },
+    "controls": {
+      "15": {
+        "ht:P8": "no_change",
+        "ht:T11": "no_change",
+        "ht:F19": "hgb"
+      },
+      "30": {
+        "ht:P8": "no_change",
+        "ht:T11": "no_change",
+        "ht:F19": "hgb"
+      },
+      "60": {
+        "ht:P8": "no_change",
+        "ht:T11": "no_change",
+        "ht:F19": "hgb"
+      },
+      "120": {
+        "ht:P8": "no_change",
+        "ht:T11": "no_change",
+        "ht:F19": "hgb"
+      },
+      "180": {
+        "ht:P8": "no_change",
+        "ht:T11": "no_change",
+        "ht:F19": "hgb"
+      }
+    }
+  },
+  "validation": {
+    "quality_component": "accepted_5_of_5_horizons",
+    "control_component": "rejected_5_of_15_pairs",
+    "unsafe_sulfur_misses_after_full_interval_gate": 0,
+    "evidence": "EXP-0020 holdout 2024Q4"
+  },
+  "loading_policy": "Verify artifact SHA-256 before loading this trusted repository joblib file."
+}

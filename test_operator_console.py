@@ -8,7 +8,7 @@ from neft.operator_console import OperatorConsoleService, contract, demo_state, 
 from neft.operator_tool import HistoryScenarioToolService
 from neft.operator_ui import render_console, render_result
 from scripts.configure_local_data import build_config
-from scripts.agent_connection import configuration
+from scripts.agent_connection import configuration, resolve_resources
 from test_history_adapter import fixture, ORIGIN
 
 
@@ -33,6 +33,17 @@ class OperatorConsoleTests(unittest.TestCase):
         self.assertEqual(c['enabled_tools'], ['get_refinery_contract', 'recommend_refinery_plan',
                                              'get_refinery_history',
                                              'evaluate_refinery_scenario_with_history'])
+
+    def test_agent_connection_autoconfigures_archive_and_bundled_model(self):
+        (self.root/'242000_tags.csv').write_bytes((self.root/'ht.csv').read_bytes())
+        (self.root/'ЛИМС fixture.xlsx').write_bytes((self.root/'lims.xlsx').read_bytes())
+        generated=self.root/'generated-sources.json'
+        data_root,sources,bundle,digest=resolve_resources(
+            self.root,generated_sources=generated,use_bundled_intelligence=True)
+        self.assertEqual(data_root,self.root)
+        self.assertEqual(sources,generated.resolve())
+        self.assertEqual(json.loads(generated.read_text()),build_config(self.root))
+        self.assertTrue(bundle.is_file());self.assertEqual(len(digest),64)
 
     def test_manual_scenario_matches_direct_cycle(self):
         snapshot = self.service.history(ORIGIN)

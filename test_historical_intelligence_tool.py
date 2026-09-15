@@ -51,6 +51,7 @@ class HistoricalIntelligenceToolTests(unittest.TestCase):
         self.assertEqual(out['status'],'HISTORICAL_CONTEXT');self.assertIsNone(out['recommendation']);self.assertFalse(out['industrial_command'])
         self.assertFalse(out['context']['quality_forecast']['full_range_within_sulfur_limit'])
         self.assertEqual(len(out['context']['analogs']),2);self.assertEqual(out['context']['pac'],'EXCLUDED')
+        self.assertEqual(out['context']['analogs_status'],'AVAILABLE')
         self.assertFalse(out['data_provenance']['later_numeric_values_parsed'])
         self.assertTrue(Path(out['audit_manifest']).is_file())
 
@@ -70,6 +71,23 @@ class HistoricalIntelligenceToolTests(unittest.TestCase):
         self.assertIn(INTELLIGENCE,config['enabled_tools'])
         self.assertIn('--historical-intelligence-bundle',config['args'])
         self.assertIn(digest,config['args'])
+
+    def test_prediction_only_bundle_returns_explicit_missing_analog_index(self):
+        value=joblib.load(self.bundle)
+        for item in value['quality'].values():
+            for key in ('fit_x','fit_y','fit_times','analog_scaler'):
+                item.pop(key,None)
+        value['distribution']={'scope':'prediction_models_only','analog_index_included':False,
+                               'training_rows_included':False,'training_timestamps_included':False}
+        stripped=self.root/'prediction-only.joblib';joblib.dump(value,stripped)
+        service=HistoricalIntelligenceToolService(self.root/'stripped-calls',self.root,self.source_file,
+                                                  stripped,sha(stripped))
+        result=service.call({'as_of':ORIGIN,'horizon_minutes':60})
+        self.assertFalse(result['is_error'])
+        self.assertEqual(result['output']['context']['analogs'],[])
+        self.assertEqual(result['output']['context']['analogs_status'],
+                         'NOT_BUNDLED_REBUILD_FROM_LOCAL_HISTORY')
+        self.assertIn('ANALOG_INDEX_NOT_BUNDLED_REBUILD_FROM_LOCAL_HISTORY',result['output']['limitations'])
 
 
 if __name__=='__main__':unittest.main()

@@ -8,6 +8,8 @@
 Python перебирает планы на конечной сетке допущений, независимо проверяет
 ограничения и возвращает модельную рекомендацию либо явный отказ. Обязательный
 предел товарной серы `≤10 мг/кг` нельзя ослабить через JSON или интерфейс.
+В репозитории есть готовый hash-pinned prediction package из EXP-0020:
+прогноз серы на 15–180 минут и исторически типичные значения controls.
 
 Это демонстрационная модель. Она не подключена к АСУ ТП, не записывает уставки
 и не доказывает промышленный или причинный эффект. Историческая телеметрия
@@ -71,6 +73,25 @@ python scripts/start_operator_console.py \
   --data-root /path/to/archive \
   --check-only
 ```
+
+## Агент с готовыми prediction-моделями
+
+После клонирования укажите только каталог, в котором лежат
+`242000_tags.csv` и один `ЛИМС*.xlsx`:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-historical.txt
+python scripts/agent_connection.py --data-root /path/to/archive --launch
+```
+
+`agent_connection.py` сам находит два источника, создаёт локальный
+hash-pinned конфиг в игнорируемом `output/`, проверяет SHA-256
+модели из `models/manifest.json` и подключает пять MCP-инструментов.
+Производственные CSV/XLSX в GitHub не нужны: они остаются read-only на машине
+команды. Без архива конкурсный агент и офлайн-демо всё равно работают.
+Состав, валидация и порядок пересборки: [MODEL_PACKAGE.md](MODEL_PACKAGE.md).
 
 ## Опциональное расширение: промышленная калибровка
 
@@ -156,9 +177,6 @@ python scripts/import_lims_to_action_capture.py \
 python scripts/agent_connection.py --format codex
 python scripts/agent_connection.py \
   --data-root /path/to/archive \
-  --history-sources history_sources.local.json \
-  --historical-intelligence-bundle output/historical-intelligence/model/bundle.joblib \
-  --historical-intelligence-sha256 SHA256_ИЗ_MANIFEST \
   --launch
 ```
 
@@ -172,8 +190,9 @@ python scripts/agent_connection.py \
 - `get_refinery_history` — read-only срез и причины отказа;
 - `evaluate_refinery_scenario_with_history` — отдельный модельный сценарий
   с provenance всех входов.
-- `get_refinery_historical_intelligence` — прогноз серы с диапазоном,
-  исторически типичные P8/T11/F19 и пять аналогов; всегда без команды.
+- `get_refinery_historical_intelligence` — прогноз серы с диапазоном и
+  исторически типичные P8/T11/F19; всегда без команды. Пять аналогов
+  добавляются при локальной пересборке full bundle.
 
 Агент не задаёт пути, модель, таймаут, обязательный предел или каталог аудита.
 Расчёт запускается в ограниченном дочернем Python-процессе. Подробнее:
@@ -201,7 +220,8 @@ python -m unittest -v \
   test_action_capture \
   test_historical_intelligence \
   test_historical_intelligence_tool \
-  test_historical_training
+  test_historical_training \
+  test_model_package
 
 python scripts/check_agent_protocol.py --output /tmp/neft-protocol
 python scripts/check_agent_raw_protocol.py --output /tmp/neft-raw-protocol
@@ -212,17 +232,19 @@ python scripts/check_action_capture_artifact.py \
 python scripts/check_runtime_smoke.py
 ```
 
-Набор включает 140 unit-тестов, настоящий MCP stdio-клиент и live HTTP smoke
+Набор включает 144 unit-теста, настоящий MCP stdio-клиент и live HTTP smoke
 изолированного runtime. Синтетические fixtures создаются самими тестами;
 производственные CSV/XLSX для CI не нужны.
 
 ## Границы данных
 
-В репозитории нет производственных CSV/XLSX, готовых обученных моделей, внутренних
-отчётов, закрытых периодов и журналов реальных агентских сессий. Локальные
+В репозитории нет производственных CSV/XLSX, строк и временных меток обучения,
+внутренних отчётов, закрытых периодов и журналов реальных агентских сессий.
+Есть один проверенный prediction-only bundle; он не содержит индекс
+исторических аналогов. Локальные
 `*.local.json`, данные, результаты и журналы исключены через `.gitignore`.
-Локальная команда обучения создаёт bundle из пользовательских файлов и
-оставляет его в исключённом каталоге `output/`.
+Локальная команда обучения может создать full bundle с аналогами из файлов команды
+и оставляет его в исключённом каталоге `output/`.
 
 ПАК не используется: смысл его timestamp, время доступности и статусы
 исправности/калибровки неизвестны. HT P8/T11/F19 показываются как контекст,
